@@ -1,0 +1,196 @@
+Login attempt for voter ID: AKS1234567
+Login attempt for voter ID: AKS1234567
+Successful login for voter: AKS1234567
+Login attempt for voter ID: BLA1234567
+Login attempt for voter ID: SAM1234567
+Login attempt for voter ID: ABC1234567
+User not found: ABC1234567
+Login attempt for voter ID: ABC1234567
+User not found: ABC1234567
+Login attempt for voter ID: ABC1234567
+User not found: ABC1234567
+Login attempt for voter ID: AKS1234567
+Invalid credentials for voter: AKS1234567
+Login attempt for voter ID: AKS1234567
+Login error: NOT NULL constraint failed: voting_votersession.session_key
+Login attempt for voter ID: AKS1234567
+Invalid credentials for voter: AKS1234567
+Login attempt for voter ID: AKS1234567
+Successful login for voter: AKS1234567
+Login attempt for voter ID: ABC1234567
+User not found: ABC1234567
+Login attempt for voter ID: ABC1234567
+User not found: ABC1234567
+Login attempt for voter ID: AKS1234567
+Login error: UNIQUE constraint failed: voting_votersession.session_key
+Login attempt for voter ID: AKS1234567
+Login error: UNIQUE constraint failed: voting_votersession.session_key
+Login attempt for voter ID: AKS1234567
+Login error: UNIQUE constraint failed: voting_votersession.session_key
+Login attempt for voter ID: MOM1234567
+Login attempt for voter ID: MOM1234567
+Login error: NOT NULL constraint failed: voting_votersession.session_key
+Login attempt for voter ID: MOM1234567
+Successful login for voter: MOM1234567
+Login attempt for voter ID: SAM1234567
+Invalid credentials for voter: SAM1234567
+Login attempt for voter ID: SAM1234567
+Invalid credentials for voter: SAM1234567
+Login attempt for voter ID: SAM1234567
+Login attempt for voter ID: MOM1234567
+Login error: UNIQUE constraint failed: voting_votersession.session_key
+Login attempt for voter ID: MOM1234567
+Login error: UNIQUE constraint failed: voting_votersession.session_key
+Login attempt for voter ID: MOM1234567
+Login error: UNIQUE constraint failed: voting_votersession.session_key
+Login attempt for voter ID: MOM1234567
+Login error: UNIQUE constraint failed: voting_votersession.session_key
+Login attempt for voter ID: AKS1234567
+Login error: NOT NULL constraint failed: voting_votersession.session_key
+Login attempt for voter ID: AKS1234567
+Successful login for voter: AKS1234567
+Login attempt for voter ID: MOM1234567
+Successful login for voter: MOM1234567
+Login attempt for voter ID: AKS1234567
+Successful login for voter: AKS1234567
+Login attempt for voter ID: AKS1234567
+Successful login for voter: AKS1234567
+Login attempt for voter ID: AKS1234567
+Successful login for voter: AKS1234567
+Login attempt for voter ID: AKS1234567
+Successful login for voter: AKS1234567
+Login attempt for voter ID: AKS1234567
+Login error: UNIQUE constraint failed: voting_votersession.session_key
+Login attempt for voter ID: AKS1234567
+Login error: UNIQUE constraint failed: voting_votersession.session_key
+Login attempt for voter ID: MOM1234567
+Login error: NOT NULL constraint failed: voting_votersession.session_key
+Login attempt for voter ID: MOM1234567
+Successful login for voter: MOM1234567
+Login attempt for voter ID: AKS1234567
+Successful login for voter: AKS1234567
+Login attempt for voter ID: AKS1234567
+Successful login for voter: AKS1234567
+Login attempt for voter ID: AKS1234567
+Successful login for voter: AKS1234567
+Login attempt for voter ID: AKS1234567
+Successful login for voter: AKS1234567
+Login attempt for voter ID: ABC1234567
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Login attempt for voter ID: AKS1234567
+Successful login for voter: AKS1234567
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Vote casting attempt by ABC1234567: {'election_id': '${electionId}', 'candidate_id': '${candidate.id}'}
+Error casting vote: ['“${candidate.id}” is not a valid UUID.']
+Vote casting attempt by ABC1234567: {'election_id': '${electionId}', 'candidate_id': '${candidate.id}'}
+Error casting vote: ['“${candidate.id}” is not a valid UUID.']
+Vote casting attempt by ABC1234567: {'election_id': '${electionId}', 'candidate_id': '${candidate.id}'}
+Error casting vote: ['“${candidate.id}” is not a valid UUID.']
+Vote casting attempt by ABC1234567: {'election_id': '${electionId}', 'candidate_id': '${candidate.id}'}
+Error casting vote: ['“${candidate.id}” is not a valid UUID.']
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Login attempt for voter ID: AKS1234567
+Invalid credentials for voter: AKS1234567
+Login attempt for voter ID: AKS1234567
+Successful login for voter: AKS1234567
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Login attempt for voter ID: SAM1234567
+Successful login for voter: SAM1234567
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Vote casting attempt by ABC1234567: {'election_id': '6734570c-426a-4d41-8db8-fd145dbd7b36', 'candidate_id': '357257b4-02ff-4d41-bdb6-5de3dbfee222'}
+Vote created: ec4b1449-4d35-4e75-ab7b-22ffd5148cc5
+Login attempt for voter ID: SAM1234567
+Invalid credentials for voter: SAM1234567
+Login attempt for voter ID: SAM1234567
+Successful login for voter: SAM1234567
+Vote casting attempt by SAM1234567: {'election_id': '6734570c-426a-4d41-8db8-fd145dbd7b36', 'candidate_id': '357257b4-02ff-4d41-bdb6-5de3dbfee222'}
+Vote created: 351f154e-627f-47cc-9a2b-5947440ac70f
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Admin 'admin' logged in.
+Admin 'admin' logged in.
+Admin 'admin' logged in.
+Admin 'admin' logged in.
+Admin 'admin' logged in.
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Admin 'admin' logged in.
+Admin 'admin' logged in.
+Admin 'admin' logged in.
+Admin 'admin' logged in.
+Admin 'admin' logged in.
+Admin 'admin' logged in.
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Admin 'admin' logged in.
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Admin 'admin' logged in.
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Admin 'admin' logged in.
+Admin 'admin' logged in.
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Vote casting attempt by ABC1234567: {'election_id': '0da73345-a058-4543-a24c-f439b062c907', 'candidate_id': 'bfe0c6da-9d74-479b-819d-de5782f2502a'}
+Vote created: 858dca25-6417-45a9-a58b-277db4251dee
+Admin 'admin' logged in.
+Admin 'admin' logged in.
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Login attempt for voter ID: ABC1234567
+Login error: UNIQUE constraint failed: voting_votersession.session_key
+Login attempt for voter ID: ABC1234567
+Login error: UNIQUE constraint failed: voting_votersession.session_key
+Login attempt for voter ID: ABC1234567
+Login error: UNIQUE constraint failed: voting_votersession.session_key
+Login attempt for voter ID: ABC1234567
+Login error: UNIQUE constraint failed: voting_votersession.session_key
+Login attempt for voter ID: ABC1234567
+Login error: UNIQUE constraint failed: voting_votersession.session_key
+Login attempt for voter ID: ABC1234567
+Login error: UNIQUE constraint failed: voting_votersession.session_key
+Login attempt for voter ID: SAM1234567
+Invalid credentials for voter: SAM1234567
+Login attempt for voter ID: AKS1234567
+Invalid credentials for voter: AKS1234567
+Login attempt for voter ID: AKS1234567
+Successful login for voter: AKS1234567
+Admin 'admin' logged in.
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Login attempt for voter ID: AKS1234567
+Invalid credentials for voter: AKS1234567
+Login attempt for voter ID: AKS1234567
+Successful login for voter: AKS1234567
+Admin 'admin' logged in.
+Login attempt for voter ID: AKS1234567
+Successful login for voter: AKS1234567
+Vote casting attempt by AKS1234567: {'election_id': '425e2953-21a0-4675-88df-f6b460c40384', 'candidate_id': 'f3f416e1-e28a-457d-97df-79dc0bc72b5a'}
+Vote created: f82ccd95-e260-483e-8bbf-552511412577
+Vote casting attempt by AKS1234567: {'election_id': '0da73345-a058-4543-a24c-f439b062c907', 'candidate_id': 'c2ba3c80-82e8-433e-ad85-7d7be6250435'}
+Vote created: 34389eeb-c516-4bdd-a3e0-75e902b1a419
+Admin 'admin' logged in.

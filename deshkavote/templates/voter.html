@@ -1,0 +1,350 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Voter Dashboard - DeshKaVote{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/voter.css' %}">
+{% endblock %}
+
+{% block content %}
+<header class="bg-success text-white py-3">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-6">
+        <h1 class="h3 mb-0">DeshKaVote - Voter Dashboard</h1>
+        <small>Welcome, {{ voter.full_name }}</small>
+      </div>
+      <div class="col-md-6 text-md-end">
+        <span class="badge bg-light text-dark me-2">Voter ID: {{ voter.voter_id }}</span>
+        <span class="badge bg-warning">
+          {% if voter.approval_status == 'approved' %}
+            ✅ Approved
+          {% elif voter.approval_status == 'pending' %}
+            ⏳ Pending Approval
+          {% else %}
+            ❌ Rejected
+          {% endif %}
+        </span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+  <div class="container">
+    <ul class="navbar-nav me-auto">
+      <li class="nav-item">
+        <a class="nav-link active" href="{% url 'voter_dashboard' %}">Dashboard</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#elections">Elections</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#profile">Profile</a>
+      </li>
+    </ul>
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'results' %}">Results</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<main class="container my-4">
+  {% if voter.approval_status != 'approved' %}
+    <div class="row">
+      <div class="col-12">
+        <div class="alert {% if voter.approval_status == 'rejected' %}alert-danger{% else %}alert-warning{% endif %} border-warning" role="alert">
+          <div class="d-flex align-items-center">
+            <div class="spinner-border spinner-border-sm text-warning me-3" role="status" {% if voter.approval_status == 'rejected' %}style="display:none;"{% endif %}>
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <div>
+              <h5 class="alert-heading mb-1">
+                {% if voter.approval_status == 'rejected' %}Account Rejected{% else %}Account Pending Approval{% endif %}
+              </h5>
+              <p class="mb-0">
+                {% if voter.approval_status == 'rejected' %}
+                  Your voter registration has been rejected. Reason: {{ voter.rejection_reason|default:"No reason provided" }}
+                {% else %}
+                  Your voter registration is currently under review by our administrators. You'll be able to participate in elections once your account is approved.
+                {% endif %}
+              </p>
+              <small class="text-muted">Registered on: {{ voter.created_at|date:"F d, Y \a\t g:i A" }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="card-title mb-0">Your Registration Details</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label text-muted">Full Name</label>
+                <p class="mb-0">{{ voter.full_name }}</p>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label text-muted">Email</label>
+                <p class="mb-0">{{ voter.email }}</p>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label text-muted">Mobile</label>
+                <p class="mb-0">{{ voter.mobile }}</p>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label text-muted">State</label>
+                <p class="mb-0">{{ voter.state }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="card-title mb-0">Verification Status</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-2">
+              <small class="text-muted">Aadhar Verification</small>
+              <div class="d-flex justify-content-between align-items-center">
+                <span>{% if voter.aadhar_verified %}✅ Verified{% else %}⏳ Pending{% endif %}</span>
+              </div>
+            </div>
+            <div class="mb-2">
+              <small class="text-muted">PAN Verification</small>
+              <div class="d-flex justify-content-between align-items-center">
+                <span>{% if voter.pan_verified %}✅ Verified{% else %}⏳ Pending{% endif %}</span>
+              </div>
+            </div>
+            <div class="mb-2">
+              <small class="text-muted">Voter ID Verification</small>
+              <div class="d-flex justify-content-between align-items-center">
+                <span>{% if voter.voter_id_verified %}✅ Verified{% else %}⏳ Pending{% endif %}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="display-6 text-primary mb-2">🗳️</div>
+                    <h5 class="card-title">Available Elections</h5>
+                    <p class="card-text display-6">{{ elections_data|length }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="display-6 text-success mb-2">📊</div>
+                    <h5 class="card-title">Active Elections</h5>
+                    <p class="card-text display-6">{{ active_elections_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="display-6 text-info mb-2">✅</div>
+                    <h5 class="card-title">Votes Cast</h5>
+                    <p class="card-text display-6" id="votesCastedCount">{{ votes_casted_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="display-6 text-warning mb-2">👤</div>
+                    <h5 class="card-title">Profile Status</h5>
+                    <p class="card-text"><span class="badge bg-success">Approved</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" id="elections">
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Available Elections</h5>
+          </div>
+          <div class="card-body">
+            {% if elections_data %}
+              {% for election_info in elections_data %}
+                <div class="border rounded p-3 mb-3 election-container" data-election-id="{{ election_info.election.id }}">
+                  <div class="row align-items-center">
+                    <div class="col-md-8">
+                      <h6 class="mb-1">{{ election_info.election.name }}</h6>
+                      <p class="text-muted mb-2">{{ election_info.election.state }} - {{ election_info.election.election_type }}</p>
+                      <small class="text-muted">
+                        📅 {{ election_info.election.start_date|date:"M d, Y H:i" }} - {{ election_info.election.end_date|date:"M d, Y H:i" }}
+                      </small>
+                    </div>
+                    <div class="col-md-4 text-md-end" id="election-actions-{{ election_info.election.id }}">
+                      {% if election_info.has_voted %}
+                        <div class="d-flex justify-content-end align-items-center voted-container">
+                            <span class="text-success fw-bold me-2">✅ Voted</span>
+                            <button class="btn btn-outline-secondary btn-sm" disabled>Vote Cast</button>
+                        </div>
+                      {% elif election_info.is_active %}
+                        <span class="badge bg-success mb-2">Active</span><br>
+                        <button type="button" class="btn btn-primary vote-btn" data-election-id="{{ election_info.election.id }}" data-election-name="{{ election_info.election.name|escapejs }}">
+                          Vote Now 🗳️
+                        </button>
+                      {% else %}
+                        <span class="badge bg-secondary mb-2">Upcoming</span><br>
+                        <button class="btn btn-outline-secondary btn-sm" disabled>
+                          ⏰ Not Started
+                        </button>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="text-center py-4">
+                <div class="display-1 text-muted mb-3">🗳️</div>
+                <h5 class="text-muted">No Elections Available</h5>
+                <p class="text-muted">There are currently no elections available for your constituency.</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="row mt-4" id="profile">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Your Profile</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Full Name</label>
+                            <p class="mb-0">{{ voter.full_name }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Voter ID</label>
+                            <p class="mb-0">{{ voter.voter_id }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Email</label>
+                            <p class="mb-0">{{ voter.email }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Mobile</label>
+                            <p class="mb-0">{{ voter.mobile }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Date of Birth</label>
+                            <p class="mb-0">{{ voter.date_of_birth|date:"F d, Y" }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Gender</label>
+                            <p class="mb-0">{{ voter.gender }}</p>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label text-muted">Address</label>
+                            <p class="mb-0">{{ voter.street_address }}, {{ voter.city }}, {{ voter.state }} - {{ voter.pincode }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Registration Date</label>
+                            <p class="mb-0">{{ voter.created_at|date:"F d, Y" }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Approval Date</label>
+                            <p class="mb-0">{{ voter.approval_date|date:"F d, Y" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Verification Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Aadhar Verification</span>
+                            <span class="badge {% if voter.aadhar_verified %}bg-success{% else %}bg-warning{% endif %}">
+                                {% if voter.aadhar_verified %}✅ Verified{% else %}⏳ Pending{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>PAN Verification</span>
+                            <span class="badge {% if voter.pan_verified %}bg-success{% else %}bg-warning{% endif %}">
+                                {% if voter.pan_verified %}✅ Verified{% else %}⏳ Pending{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Voter ID Verification</span>
+                            <span class="badge {% if voter.voter_id_verified %}bg-success{% else %}bg-warning{% endif %}">
+                                {% if voter.voter_id_verified %}✅ Verified{% else %}⏳ Pending{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="text-center">
+                        <span class="badge {% if voter.is_fully_verified %}bg-success{% else %}bg-warning{% endif %} fs-6">
+                            {% if voter.is_fully_verified %}
+                                ✅ Fully Verified
+                            {% else %}
+                                ⏳ Verification Pending
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+  {% endif %}
+</main>
+
+<!-- Voting Modal -->
+<div class="modal fade" id="votingModal" tabindex="-1" aria-labelledby="votingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="votingModalLabel">🗳️ Cast Your Vote</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="votingContent">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="bg-success text-white text-center py-3 mt-5">
+  &copy; 2025 DeshKaVote. All rights reserved.
+</footer>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{% static 'js/voter.js' %}"></script>
+{% endblock %}
