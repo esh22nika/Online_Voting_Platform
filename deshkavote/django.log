@@ -194,3 +194,30 @@ Vote created: f82ccd95-e260-483e-8bbf-552511412577
 Vote casting attempt by AKS1234567: {'election_id': '0da73345-a058-4543-a24c-f439b062c907', 'candidate_id': 'c2ba3c80-82e8-433e-ad85-7d7be6250435'}
 Vote created: 34389eeb-c516-4bdd-a3e0-75e902b1a419
 Admin 'admin' logged in.
+Admin 'admin' logged in.
+Login attempt for voter ID: ESH1234567
+Successful login for voter: ESH1234567
+Vote casting attempt by ESH1234567: {'election_id': '425e2953-21a0-4675-88df-f6b460c40384', 'candidate_id': 'f3f416e1-e28a-457d-97df-79dc0bc72b5a'}
+Vote created: 83cd14b4-01d9-4cb4-b9a7-25340f469d71
+Login attempt for voter ID: ESH1234567
+Login error: duplicate key value violates unique constraint "voting_votersession_session_key_key"
+DETAIL:  Key (session_key)=(oazig5nw0qfqj885i09wsorr5z7lkjkx) already exists.
+
+Login attempt for voter ID: SAM1234567
+Invalid credentials for voter: SAM1234567
+Login attempt for voter ID: SAM1234567
+Successful login for voter: SAM1234567
+Vote casting attempt by SAM1234567: {'election_id': '0da73345-a058-4543-a24c-f439b062c907', 'candidate_id': 'bfe0c6da-9d74-479b-819d-de5782f2502a'}
+Vote created: e727b80b-8a36-4f3d-b21d-b17a55b68e09
+Login attempt for voter ID: ESH1234567
+Successful login for voter: ESH1234567
+Vote casting attempt by ESH1234567: {'election_id': '0da73345-a058-4543-a24c-f439b062c907', 'candidate_id': 'c2ba3c80-82e8-433e-ad85-7d7be6250435'}
+Vote created: ebb1fcb0-d395-4562-ade7-cf1bd967ccb6
+Admin 'admin' logged in.
+Admin 'admin' logged in.
+Admin 'admin' logged in.
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Vote casting attempt by ABC1234567: {'election_id': '425e2953-21a0-4675-88df-f6b460c40384', 'candidate_id': '5cefeb32-1227-453c-81b9-20b3cc366128'}
+Vote created: 47b5c5af-ef6c-45e8-8398-d0c511e8dd35
+Admin 'admin' logged in.
