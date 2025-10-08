@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <h2>Login with OTP</h2>
+    <form method="post">
+        {% csrf_token %}
+        <input type="text" name="mobile" placeholder="Enter your mobile number" required>
+        <button type="submit">Send OTP</button>
+    </form>
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -245,3 +245,16 @@ Admin 'admin' logged in.
 Admin 'admin' logged in.
 Login attempt for voter ID: ABC1234567
 Successful login for voter: ABC1234567
+Login attempt for voter ID: ABC1234567
+Login error: duplicate key value violates unique constraint "voting_votersession_session_key_key"
+DETAIL:  Key (session_key)=(k8blxed98fwwjwtyqdo56f8t4jghgax0) already exists.
+
+Login attempt for voter ID: ESH1234567
+Successful login for voter: ESH1234567
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Login attempt for voter ID: AKS1234567
+Successful login for voter: AKS1234567
+Admin 'admin' logged in.

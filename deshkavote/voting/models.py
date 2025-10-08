@@ -1,11 +1,12 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator,FileExtensionValidator
 from django.conf import settings
 from django.utils import timezone
 import hashlib
 import uuid
 import json
+from datetime import timedelta
 
 class CustomUser(AbstractUser):
     USER_ROLES = (
@@ -51,7 +52,27 @@ class Voter(models.Model):
     voter_id = models.CharField(max_length=20, unique=True)
     aadhar_number = models.CharField(max_length=12)
     pan_number = models.CharField(max_length=10)
-
+    aadhar_document = models.FileField(
+        upload_to='voter_documents/aadhar/',
+        null=True,
+        blank=True,
+        validators=[FileExtensionValidator(['pdf', 'jpg', 'jpeg', 'png'])],
+        help_text='Upload Aadhar Card (PDF/Image)'
+    )
+    pan_document = models.FileField(
+        upload_to='voter_documents/pan/',
+        null=True,
+        blank=True,
+        validators=[FileExtensionValidator(['pdf', 'jpg', 'jpeg', 'png'])],
+        help_text='Upload PAN Card (PDF/Image)'
+    )
+    voter_id_document = models.FileField(
+        upload_to='voter_documents/voter_id/',
+        null=True,
+        blank=True,
+        validators=[FileExtensionValidator(['pdf', 'jpg', 'jpeg', 'png'])],
+        help_text='Upload Voter ID Card (PDF/Image)'
+    )
     # Enhanced location data for election eligibility
     constituency = models.CharField(max_length=100, blank=True)
     district = models.CharField(max_length=50, blank=True)
@@ -406,3 +427,19 @@ class VoterSession(models.Model):
     # Security fields
     device_fingerprint = models.CharField(max_length=128, blank=True)
     location_hash = models.CharField(max_length=64, blank=True)
+
+class OTPVerification(models.Model):
+    mobile = models.CharField(max_length=10)
+    otp = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    verified = models.BooleanField(default=False)
+    attempts = models.IntegerField(default=0)
+
+    def is_valid(self):
+        """Checks if OTP is still valid (not expired and within attempt limits)."""
+        is_expired = (timezone.now() - self.created_at) > timedelta(minutes=10) # OTP valid for 10 mins
+        max_attempts_reached = self.attempts >= 3
+        return not is_expired and not max_attempts_reached
+
+    def __str__(self):
+        return f"OTP for {self.mobile} - Verified: {self.verified}"

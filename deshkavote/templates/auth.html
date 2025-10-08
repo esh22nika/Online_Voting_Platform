@@ -155,7 +155,26 @@
             <input type="text" id="panNumber" class="form-control" placeholder="Enter your PAN Number" required />
         </div>
     </div>
+    {% csrf_token %}
 
+    <hr>
+    <h5 class="mt-4 mb-3">Document Verification</h5>
+    <p class="text-muted">Please upload the following documents for verification. (PDF, JPG, PNG accepted)</p>
+
+    <div class="mb-3">
+        <label for="aadhar_document" class="form-label">Aadhar Card</label>
+        <input type="file" class="form-control" id="aadhar_document" name="aadhar_document">
+    </div>
+
+    <div class="mb-3">
+        <label for="pan_document" class="form-label">PAN Card</label>
+        <input type="file" class="form-control" id="pan_document" name="pan_document">
+    </div>
+
+    <div class="mb-3">
+        <label for="voter_id_document" class="form-label">Voter ID Card</label>
+        <input type="file" class="form-control" id="voter_id_document" name="voter_id_document">
+    </div>
     <div class="mb-3 text-start">
       <label for="registerPassword" class="form-label fw-bold">Password *</label>
       <input type="password" id="registerPassword" class="form-control" placeholder="Enter password" required pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}" title="Must contain at least one number, one uppercase and lowercase letter, one special character, and at least 8 or more characters" />

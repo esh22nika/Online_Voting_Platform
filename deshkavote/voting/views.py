@@ -22,7 +22,11 @@ import asyncio
 from decimal import Decimal
 import uuid
 import csv
-
+from django.shortcuts import render, redirect
+from django.contrib.auth import login
+from .models import CustomUser
+from .otp_service import OTPService
+from .forms import DocumentUploadForm
 # Import Django Channels libraries
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -1743,3 +1747,181 @@ def logout_user(request):
     messages.success(request, 'You have been logged out successfully.')
     return redirect('landing')
 
+@login_required
+def voter_results(request):
+    """Results page showing only elections where the current voter has voted"""
+    if request.user.role != 'voter':
+        messages.error(request, 'This page is only accessible to voters.')
+        return redirect('landing')
+    
+    try:
+        voter = Voter.objects.get(user=request.user)
+        
+        # Get all elections where this voter has cast a vote
+        voted_election_ids = Vote.objects.filter(
+            voter=voter,
+            status='finalized'
+        ).values_list('election_id', flat=True)
+        
+        # Get those elections with completed status
+        voted_elections = Election.objects.filter(
+            id__in=voted_election_ids,
+            status='completed'
+        ).order_by('-end_date').prefetch_related('candidates')
+        
+        results_data = []
+        
+        for election in voted_elections:
+            # Get vote counts for each candidate in this election
+            vote_counts = Vote.objects.filter(
+                election=election,
+                status='finalized'
+            ).values(
+                'candidate__id',
+                'candidate__name', 
+                'candidate__party',
+                'candidate__symbol'
+            ).annotate(
+                vote_count=Count('id')
+            ).order_by('-vote_count')
+            
+            # Calculate total votes for this election
+            total_votes = sum(item['vote_count'] for item in vote_counts)
+            
+            # Prepare candidate results with percentages
+            candidates_results = []
+            for item in vote_counts:
+                percentage = (item['vote_count'] / total_votes * 100) if total_votes > 0 else 0
+                candidates_results.append({
+                    'id': item['candidate__id'],
+                    'name': item['candidate__name'],
+                    'party': item['candidate__party'],
+                    'symbol': item['candidate__symbol'],
+                    'votes': item['vote_count'],
+                    'percentage': round(percentage, 2)
+                })
+            
+            # Determine winner (candidate with most votes)
+            winner = None
+            if len(candidates_results) > 1 and candidates_results[0]['votes'] == candidates_results[1]['votes']:
+                winner = None  # Tie between candidates
+            else:
+                winner = candidates_results[0] if candidates_results else None
+
+            # Check if consensus was achieved based on threshold
+            consensus_achieved = False
+            if winner and total_votes > 0:
+                winner_percentage = winner['percentage']
+                consensus_achieved = winner_percentage >= election.consensus_threshold
+
+            # If consensus not achieved and there is a tie, declare no winner
+            if not consensus_achieved and winner is None:
+                winner = None
+            
+            # Get the candidate this voter voted for
+            voter_vote = Vote.objects.filter(
+                voter=voter,
+                election=election,
+                status='finalized'
+            ).select_related('candidate').first()
+            
+            voted_candidate = None
+            if voter_vote:
+                voted_candidate = {
+                    'name': voter_vote.candidate.name,
+                    'party': voter_vote.candidate.party,
+                    'symbol': voter_vote.candidate.symbol
+                }
+            
+            # Get total eligible voters
+            if election.election_type == 'General Election':
+                eligible_voters_count = Voter.objects.filter(approval_status='approved').count()
+            elif election.election_type == 'State Assembly':
+                eligible_voters_count = Voter.objects.filter(
+                    approval_status='approved',
+                    state=election.state
+                ).count()
+            elif election.election_type == 'Municipal':
+                eligible_voters_count = Voter.objects.filter(
+                    approval_status='approved',
+                    state=election.state,
+                    city=election.city
+                ).count()
+            elif election.election_type == 'Panchayat':
+                eligible_voters_count = Voter.objects.filter(
+                    approval_status='approved',
+                    state=election.state,
+                    district=election.district
+                ).count()
+            else:
+                eligible_voters_count = Voter.objects.filter(approval_status='approved').count()
+            
+            # Calculate voter turnout
+            voter_turnout = (total_votes / eligible_voters_count * 100) if eligible_voters_count > 0 else 0
+            
+            results_data.append({
+                'election': election,
+                'candidates_results': candidates_results,
+                'total_votes': total_votes,
+                'eligible_voters': eligible_voters_count,
+                'voter_turnout': round(voter_turnout, 2),
+                'winner': winner,
+                'consensus_achieved': consensus_achieved,
+                'consensus_threshold': election.consensus_threshold,
+                'voted_candidate': voted_candidate
+            })
+        
+        context = {
+            'voter': voter,
+            'results_data': results_data,
+            'total_voted_elections': voted_elections.count()
+        }
+        
+        return render(request, 'voter_results.html', context)
+        
+    except Voter.DoesNotExist:
+        messages.error(request, 'Voter profile not found.')
+        return redirect('voter_dashboard')
+    except Exception as e:
+        logger.error(f"Error fetching voter results: {str(e)}")
+        messages.error(request, 'Error loading your election results.')
+        return render(request, 'voter_results.html', {
+            'results_data': [],
+            'total_voted_elections': 0,
+            'error': str(e)
+        })
+    
+def send_otp(request):
+    if request.method == 'POST':
+        mobile = request.POST.get('mobile')
+        success, message, _ = OTPService.send_otp(mobile)
+        if success:
+            return redirect('verify_otp', mobile=mobile)
+        else:
+            return render(request, 'send_otp.html', {'error': message})
+    return render(request, 'send_otp.html')
+
+def verify_otp(request, mobile):
+    if request.method == 'POST':
+        otp_entered = request.POST.get('otp')
+        success, message = OTPService.verify_otp(mobile, otp_entered)
+        if success:
+            try:
+                user = CustomUser.objects.get(mobile=mobile)
+                login(request, user)
+                return redirect('voter_dashboard')  # Redirect to voter's dashboard
+            except CustomUser.DoesNotExist:
+                return render(request, 'verify_otp.html', {'error': 'User not found.'})
+        else:
+            return render(request, 'verify_otp.html', {'error': message})
+    return render(request, 'verify_otp.html', {'mobile': mobile})
+
+def upload_documents(request):
+    if request.method == 'POST':
+        form = DocumentUploadForm(request.POST, request.FILES, instance=request.user.voter)
+        if form.is_valid():
+            form.save()
+            return redirect('voter_dashboard')
+    else:
+        form = DocumentUploadForm(instance=request.user.voter)
+    return render(request, 'upload_documents.html', {'form': form})

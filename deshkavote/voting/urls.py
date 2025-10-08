@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from . import consumers
+from .views import send_otp, verify_otp, upload_documents
 
 urlpatterns = [
     # Basic pages
@@ -18,6 +19,9 @@ urlpatterns = [
 
     # Dashboards
     path('voter/', views.voter_dashboard, name='voter_dashboard'),
+   
+    path('voter-results/', views.voter_results, name='voter_results'),
+
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
 
     # Voter management APIs
@@ -26,6 +30,7 @@ urlpatterns = [
     path('api/reconsider-voter/', views.reconsider_voter, name='reconsider_voter'),
     path('api/voter-details/<int:voter_id>/', views.get_voter_details, name='get_voter_details'),
     path('api/download-voters-list/', views.download_voters_list, name='download_voters_list'),
+    
 
     # Election management APIs
     path('api/create-election/', views.create_election, name='create_election'),
@@ -58,6 +63,10 @@ urlpatterns = [
     path('api/election-status/<uuid:election_id>/', views.get_election_status, name='election_status'),
     path('api/vote-status/<uuid:vote_id>/', views.get_vote_status, name='vote_status'),
     path('api/candidates/<uuid:election_id>/', views.get_candidates, name='get_candidates'),
+
+    path('login/otp/', send_otp, name='send_otp'),
+    path('login/otp/verify/<str:mobile>/', verify_otp, name='verify_otp'),
+    path('documents/upload/', upload_documents, name='upload_documents'),
 ]
 
 websocket_urlpatterns = [
