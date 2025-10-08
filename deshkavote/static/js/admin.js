@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadLiveElectionPolls();
     
     // Refresh live polls every 10 seconds
-    setInterval(loadLiveElectionPolls, 10000);
+    setInterval(loadLiveElectionPolls, 5000);
 });
 
 // WebSocket connection for real-time updates
@@ -110,6 +110,8 @@ function handleVoteCast(vote) {
     if (document.querySelector('#monitoring-tab').classList.contains('active')) {
         updateVoteQueueChart();
         updateConsensusMonitor();
+        updateElectionResults(vote.election_id);
+
     }
 }
 
@@ -630,7 +632,7 @@ function startRealTimeUpdates() {
         updateVoteQueueChart();
         updateNodePerformanceChart();
         updateConsensusMonitor();
-    }, 10000);
+    }, 5000);
 }
 
 // Update vote queue chart
@@ -791,10 +793,10 @@ function getCSRFToken() {
 function startHeartbeat() {
     setInterval(() => {
         updateRealTimeCounters();
-        updateTotalVotesCounter(); // ADD THIS LINE
-    }, 30000);
+         // ADD THIS LINE
+    }, 3000);
     updateRealTimeCounters();
-    updateTotalVotesCounter(); // ADD THIS LINE TOO
+     // ADD THIS LINE TOO
 }
 
 // Update real-time counters

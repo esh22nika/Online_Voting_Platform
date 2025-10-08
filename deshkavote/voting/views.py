@@ -580,6 +580,7 @@ def admin_dashboard(request):
         'approved_count': approved_voters.count(),
         'rejected_count': rejected_voters.count(),
         'total_elections': elections.count(),
+        'total_votes': Vote.objects.filter(status='finalized').count(),
         'active_elections': elections.filter(status='active').count(),
         'total_candidates': candidates.count(),
         'active_nodes': ElectionNode.objects.filter(status='active').count(),
@@ -848,13 +849,24 @@ def get_election_results(request, election_id):
         election=election,
         status='finalized'
     ).values(
-        'candidate__name', 
+        'candidate__name',
         'candidate__party'
     ).annotate(
         vote_count=Count('id')
     ).order_by('-vote_count')
-    
-    return JsonResponse({'success': True, 'results': list(vote_counts)})
+
+    return JsonResponse({
+        'success': True,
+        'results': [
+            {
+                'candidate_name': r['candidate__name'],
+                'party': r['candidate__party'],
+                'vote_count': r['vote_count']
+            }
+            for r in vote_counts
+        ]
+    })
+
 
 @csrf_exempt
 @login_required
@@ -1590,34 +1602,114 @@ def sync_election_across_nodes(election_id):
         return f"Error: {e}"
 
 def results_page(request):
-    """Results page"""
-    completed_elections = Election.objects.filter(status='completed').order_by('-end_date')
-    results_data = []
-    
-    for election in completed_elections:
-        candidates_with_votes = []
-        for candidate in election.candidates.all():
-            vote_count = Vote.objects.filter(
-                candidate=candidate,
+    """Enhanced results page with comprehensive election results"""
+    try:
+        # Get all completed elections ordered by end date (most recent first)
+        completed_elections = Election.objects.filter(
+            status='completed'
+        ).order_by('-end_date').prefetch_related('candidates')
+        
+        results_data = []
+        
+        for election in completed_elections:
+            # Get vote counts for each candidate in this election
+            vote_counts = Vote.objects.filter(
                 election=election,
                 status='finalized'
-            ).count()
-            candidates_with_votes.append({
-                'candidate': candidate,
-                'votes': vote_count
+            ).values(
+                'candidate__id',
+                'candidate__name', 
+                'candidate__party',
+                'candidate__symbol'
+            ).annotate(
+                vote_count=Count('id')
+            ).order_by('-vote_count')
+            
+            # Calculate total votes for this election
+            total_votes = sum(item['vote_count'] for item in vote_counts)
+            
+            # Prepare candidate results with percentages
+            candidates_results = []
+            for item in vote_counts:
+                percentage = (item['vote_count'] / total_votes * 100) if total_votes > 0 else 0
+                candidates_results.append({
+                    'id': item['candidate__id'],
+                    'name': item['candidate__name'],
+                    'party': item['candidate__party'],
+                    'symbol': item['candidate__symbol'],
+                    'votes': item['vote_count'],
+                    'percentage': round(percentage, 2)
+                })
+            
+            # Determine winner (candidate with most votes)
+            winner = None
+            if len(candidates_results) > 1 and candidates_results[0]['votes'] == candidates_results[1]['votes']:
+                winner = None  # Tie between candidates
+            else:
+                winner = candidates_results[0] if candidates_results else None
+
+            # Check if consensus was achieved based on threshold
+            consensus_achieved = False
+            if winner and total_votes > 0:
+                winner_percentage = winner['percentage']
+                consensus_achieved = winner_percentage >= election.consensus_threshold
+
+            # If consensus not achieved and there is a tie, declare no winner
+            if not consensus_achieved and winner is None:
+                winner = None  # Explicitly set winner to None for tie scenario
+            
+            # Get total eligible voters (approved voters in the election's location)
+            if election.election_type == 'General Election':
+                eligible_voters_count = Voter.objects.filter(approval_status='approved').count()
+            elif election.election_type == 'State Assembly':
+                eligible_voters_count = Voter.objects.filter(
+                    approval_status='approved',
+                    state=election.state
+                ).count()
+            elif election.election_type == 'Municipal':
+                eligible_voters_count = Voter.objects.filter(
+                    approval_status='approved',
+                    state=election.state,
+                    city=election.city
+                ).count()
+            elif election.election_type == 'Panchayat':
+                eligible_voters_count = Voter.objects.filter(
+                    approval_status='approved',
+                    state=election.state,
+                    district=election.district
+                ).count()
+            else:
+                eligible_voters_count = Voter.objects.filter(approval_status='approved').count()
+            
+            # Calculate voter turnout
+            voter_turnout = (total_votes / eligible_voters_count * 100) if eligible_voters_count > 0 else 0
+            
+            results_data.append({
+                'election': election,
+                'candidates_results': candidates_results,
+                'total_votes': total_votes,
+                'eligible_voters': eligible_voters_count,
+                'voter_turnout': round(voter_turnout, 2),
+                'winner': winner,
+                'consensus_achieved': consensus_achieved,
+                'consensus_threshold': election.consensus_threshold
             })
         
-        candidates_with_votes.sort(key=lambda x: x['votes'], reverse=True)
-        total_votes = sum(c['votes'] for c in candidates_with_votes)
+        context = {
+            'results_data': results_data,
+            'total_completed_elections': completed_elections.count()
+        }
         
-        results_data.append({
-            'election': election,
-            'candidates_with_votes': candidates_with_votes,
-            'total_votes': total_votes,
-            'winner': candidates_with_votes[0] if candidates_with_votes else None
+        return render(request, 'results.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error fetching election results: {str(e)}")
+        messages.error(request, 'Error loading election results.')
+        return render(request, 'results.html', {
+            'results_data': [],
+            'total_completed_elections': 0,
+            'error': str(e)
         })
-    
-    return render(request, 'results.html', {'results_data': results_data})
 
 def contact_page(request):
     """Contact page"""
@@ -1650,3 +1742,4 @@ def logout_user(request):
     logout(request)
     messages.success(request, 'You have been logged out successfully.')
     return redirect('landing')
+
