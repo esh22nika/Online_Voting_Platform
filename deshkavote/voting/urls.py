@@ -65,8 +65,9 @@ urlpatterns = [
     path('api/candidates/<uuid:election_id>/', views.get_candidates, name='get_candidates'),
 
     path('login/otp/', send_otp, name='send_otp'),
-    path('login/otp/verify/<str:mobile>/', verify_otp, name='verify_otp'),
+    path('verify-otp/', views.verify_otp, name='verify_otp'),
     path('documents/upload/', upload_documents, name='upload_documents'),
+    path('api/verify-and-approve-voter/', views.verify_and_approve_voter, name='verify_and_approve_voter'),
 ]
 
 websocket_urlpatterns = [

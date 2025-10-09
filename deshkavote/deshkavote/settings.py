@@ -230,7 +230,4 @@ SESSION_CACHE_ALIAS = 'default'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Twilio configuration
-TWILIO_ACCOUNT_SID = 'your_account_sid'
-TWILIO_AUTH_TOKEN = 'your_auth_token'
-TWILIO_PHONE_NUMBER = 'your_twilio_phone_number'
+FAST2SMS_API_KEY = '8PMbgytRDHwq9x1C3J0zesV7dFXGOEUokBfTmcjArLIlYhiZSN4ygmouWkAUZcGLtpfvjdrNz0TP9MDS'  # Get from Fast2SMS dashboard

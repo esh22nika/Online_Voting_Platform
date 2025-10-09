@@ -1,14 +1,14 @@
 import random
 import logging
+import requests
 from django.utils import timezone
 from django.conf import settings
-from twilio.rest import Client
 from .models import OTPVerification, Voter
 
 logger = logging.getLogger(__name__)
 
 class OTPService:
-    """Handle OTP generation and verification"""
+    """Handle OTP generation and verification using Fast2SMS"""
 
     @staticmethod
     def generate_otp():
@@ -18,7 +18,7 @@ class OTPService:
     @staticmethod
     def send_otp(mobile):
         """
-        Generate and send OTP to a mobile number using Twilio.
+        Generate and send OTP to a mobile number using Fast2SMS.
         """
         try:
             # Check if mobile number already has 2 registered users
@@ -37,22 +37,43 @@ class OTPService:
                 otp=otp_code,
             )
 
-            # --- START: TWILIO INTEGRATION ---
+            # --- START: FAST2SMS INTEGRATION ---
             try:
-                client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-                message = client.messages.create(
-                    body=f"Your DeshKaVote OTP is: {otp_code}. It is valid for 10 minutes.",
-                    from_=settings.TWILIO_PHONE_NUMBER,
-                    to=f"+91{mobile}" # Assuming Indian numbers
-                )
-                logger.info(f"OTP SMS sent successfully to {mobile} via Twilio. SID: {message.sid}")
+                url = "https://www.fast2sms.com/dev/bulkV2"
+                
+                payload = {
+                    'variables_values': otp_code,
+                    'route': 'otp',
+                    'numbers': mobile,
+                }
+                
+                headers = {
+                    'authorization': settings.FAST2SMS_API_KEY,
+                    'Content-Type': "application/x-www-form-urlencoded",
+                    'Cache-Control': "no-cache",
+                }
+                
+                response = requests.post(url, data=payload, headers=headers)
+                response_data = response.json()
+                
+                if response_data.get('return'):
+                    logger.info(f"OTP sent successfully to {mobile} via Fast2SMS")
+                    return True, "OTP sent successfully to your mobile number", otp_code
+                else:
+                    logger.error(f"Fast2SMS error: {response_data}")
+                    # For development, still return success with OTP in console
+                    logger.warning(f"DEVELOPMENT MODE - OTP for {mobile}: {otp_code}")
+                    return True, "OTP sent successfully (dev mode)", otp_code
+                    
             except Exception as e:
-                logger.error(f"Failed to send OTP SMS via Twilio: {e}")
-                # For development, we can proceed without sending SMS, but in production, this should be an error.
-                # return False, "Failed to send OTP. Please try again later.", None
-            # --- END: TWILIO INTEGRATION ---
-
-            return True, "OTP sent successfully to your mobile number", otp_code
+                logger.error(f"Failed to send OTP via Fast2SMS: {e}")
+                # For development, print OTP to console
+                logger.warning(f"DEVELOPMENT MODE - OTP for {mobile}: {otp_code}")
+                print(f"\n{'='*50}")
+                print(f"DEVELOPMENT MODE - OTP for {mobile}: {otp_code}")
+                print(f"{'='*50}\n")
+                return True, "OTP sent successfully (check console in dev mode)", otp_code
+            # --- END: FAST2SMS INTEGRATION ---
 
         except Exception as e:
             logger.error(f"Error in send_otp service: {e}")
@@ -79,7 +100,7 @@ class OTPService:
                 # Mark as verified to invalidate it
                 otp_record.verified = True
                 otp_record.save()
-                return False, "OTP has expired or you have reached the maximum number of attempts."
+                return False, "OTP has expired or maximum attempts reached. Please request a new one."
 
             # Increment attempts
             otp_record.attempts += 1
@@ -93,8 +114,10 @@ class OTPService:
             else:
                 remaining_attempts = 3 - otp_record.attempts
                 if remaining_attempts > 0:
-                    return False, f"Invalid OTP. You have {remaining_attempts} attempts remaining."
+                    return False, f"Invalid OTP. You have {remaining_attempts} attempt(s) remaining."
                 else:
+                    otp_record.verified = True  # Invalidate after max attempts
+                    otp_record.save()
                     return False, "Invalid OTP. Maximum attempts reached. Please request a new OTP."
 
         except Exception as e:

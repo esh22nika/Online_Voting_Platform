@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
       voterId: !!voterIdInput,
       password: !!passwordInput
     });
-
+  
     if (!voterIdInput || !passwordInput) {
       console.error('Could not find login form inputs');
       showMessage('Form elements not found. Please refresh the page and try again.', 'danger');
@@ -219,7 +219,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Prepare data for JSON submission (supporting approval system)
     const data = {
       voterId: voterId.toUpperCase(),
-      password: password
+      password: password,
+      request_otp: true
     };
 
     console.log('Sending login request...');
@@ -252,7 +253,10 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       if (result.success) {
-        if (result.redirect_url) {
+        if (result.otp_required) {
+          // Show OTP modal
+          showOTPModal(voterId.toUpperCase(), result.mobile);
+        } else if (result.redirect_url) {
           showMessage('Login successful! Redirecting...', 'success');
           setTimeout(() => {
             window.location.href = result.redirect_url;
@@ -288,6 +292,95 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   });
+
+  // Add this new function for OTP verification
+  function showOTPModal(voterId, mobile) {
+    const modalHTML = `
+      <div class="modal fade" id="otpModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">OTP Verification</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <p>An OTP has been sent to your registered mobile number ending with <strong>****${mobile.slice(-4)}</strong></p>
+              <div class="mb-3">
+                <label for="otpInput" class="form-label">Enter OTP</label>
+                <input type="text" class="form-control" id="otpInput" placeholder="Enter 6-digit OTP" maxlength="6" pattern="[0-9]{6}">
+                <div id="otpError" class="text-danger mt-2" style="display: none;"></div>
+              </div>
+              <p class="text-muted small">OTP is valid for 10 minutes. You have 3 attempts.</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" id="verifyOtpBtn">Verify OTP</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    
+    document.getElementById('otpModal')?.remove();
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    const otpModal = new bootstrap.Modal(document.getElementById('otpModal'));
+    otpModal.show();
+
+    document.getElementById('verifyOtpBtn').addEventListener('click', function() {
+      const otpInput = document.getElementById('otpInput');
+      const otp = otpInput.value.trim();
+      
+      if (!/^[0-9]{6}$/.test(otp)) {
+        document.getElementById('otpError').textContent = 'Please enter a valid 6-digit OTP';
+        document.getElementById('otpError').style.display = 'block';
+        return;
+      }
+
+      const verifyBtn = this;
+      verifyBtn.disabled = true;
+      verifyBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verifying...';
+
+      fetch('/verify-otp/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+          voterId: voterId,
+          otp: otp
+        })
+      })
+      .then(response => response.json())
+      .then(result => {
+        if (result.success) {
+          otpModal.hide();
+          showMessage('OTP verified! Redirecting...', 'success');
+          setTimeout(() => {
+            window.location.href = result.redirect_url;
+          }, 1000);
+        } else {
+          document.getElementById('otpError').textContent = result.message;
+          document.getElementById('otpError').style.display = 'block';
+          verifyBtn.disabled = false;
+          verifyBtn.textContent = 'Verify OTP';
+        }
+      })
+      .catch(error => {
+        console.error('OTP verification error:', error);
+        document.getElementById('otpError').textContent = 'Error verifying OTP. Please try again.';
+        document.getElementById('otpError').style.display = 'block';
+        verifyBtn.disabled = false;
+        verifyBtn.textContent = 'Verify OTP';
+      });
+    });
+
+    document.getElementById('otpInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        document.getElementById('verifyOtpBtn').click();
+      }
+    });
+  }
 
   // --- Enhanced registration form validation logic ---
   function isValidEmail(email) {
@@ -342,7 +435,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Real-time validation setup
   function setupRealTimeValidation() {
     const validations = [
-      { id: 'firstName', test: val => /^[A-Za-z]{2,}$/.test(val), msg: 'First name must be at least 6 letters long and contain only alphabets.' },
+      { id: 'firstName', test: val => /^[A-Za-z]{2,}$/.test(val), msg: 'First name must be at least 2 letters long and contain only alphabets.' },
       { id: 'lastName', test: val => val.trim() !== '', msg: 'Last name cannot be empty.' },
       { id: 'email', test: isValidEmail, msg: 'Enter a valid email (e.g. user@example.com).' },
       { id: 'mobile', test: val => /^[6-9]\d{9}$/.test(val), msg: 'Mobile must be 10 digits and start with 6/7/8/9.' },
@@ -475,34 +568,75 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
 
-      // Collect form data for JSON submission (supporting approval system)
-      const data = {
-        firstName: document.getElementById('firstName').value,
-        lastName: document.getElementById('lastName').value,
-        email: document.getElementById('email').value,
-        mobile: document.getElementById('mobile').value,
-        dob: document.getElementById('dob').value,
-        gender: document.getElementById('gender').value,
-        parentSpouseName: document.getElementById('parentSpouseName').value,
-        streetAddress: document.getElementById('streetAddress').value,
-        city: document.getElementById('city').value,
-        state: document.getElementById('state').value,
-        pincode: document.getElementById('pincode').value,
-        placeOfBirth: document.getElementById('placeOfBirth').value,
-        voterId: document.getElementById('registerVoterId').value,
-        aadharNumber: document.getElementById('aadharNumber').value,
-        panNumber: document.getElementById('panNumber').value,
-        password: document.getElementById('registerPassword').value
-      };
+      // Collect form data using FormData for file uploads
+      const formData = new FormData();
+      
+      // Add all text fields - ensure they have values
+      const firstName = document.getElementById('firstName').value.trim();
+      const lastName = document.getElementById('lastName').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const mobile = document.getElementById('mobile').value.trim();
+      const dob = document.getElementById('dob').value;
+      const gender = document.getElementById('gender').value;
+      const parentSpouseName = document.getElementById('parentSpouseName').value.trim();
+      const streetAddress = document.getElementById('streetAddress').value.trim();
+      const city = document.getElementById('city').value.trim();
+      const state = document.getElementById('state').value;
+      const pincode = document.getElementById('pincode').value.trim();
+      const placeOfBirth = document.getElementById('placeOfBirth').value.trim();
+      const voterId = document.getElementById('registerVoterId').value.trim();
+      const aadharNumber = document.getElementById('aadharNumber').value.trim();
+      const panNumber = document.getElementById('panNumber').value.trim();
+      const password = document.getElementById('registerPassword').value;
+
+      // Validate that required fields have values before appending
+      if (!dob) {
+        showMessage('Please select your date of birth', 'danger');
+        if (submitButton) {
+          submitButton.disabled = false;
+          if (submitButton.textContent !== undefined) {
+            submitButton.textContent = originalButtonText;
+          } else {
+            submitButton.value = originalButtonText;
+          }
+        }
+        return;
+      }
+
+      // Append all fields to FormData
+      formData.append('firstName', firstName);
+      formData.append('lastName', lastName);
+      formData.append('email', email);
+      formData.append('mobile', mobile);
+      formData.append('dob', dob);
+      formData.append('gender', gender);
+      formData.append('parentSpouseName', parentSpouseName);
+      formData.append('streetAddress', streetAddress);
+      formData.append('city', city);
+      formData.append('state', state);
+      formData.append('pincode', pincode);
+      formData.append('placeOfBirth', placeOfBirth);
+      formData.append('voterId', voterId);
+      formData.append('aadharNumber', aadharNumber);
+      formData.append('panNumber', panNumber);
+      formData.append('password', password);
+
+      // Add file uploads
+      const aadharFile = document.getElementById('aadhar_document').files[0];
+      const panFile = document.getElementById('pan_document').files[0];
+      const voterIdFile = document.getElementById('voter_id_document').files[0];
+      
+      if (aadharFile) formData.append('aadhar_document', aadharFile);
+      if (panFile) formData.append('pan_document', panFile);
+      if (voterIdFile) formData.append('voter_id_document', voterIdFile);
 
       // Send registration request to the backend with approval system support
       fetch('/register/', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'X-CSRFToken': getCookie('csrftoken')
         },
-        body: JSON.stringify(data)
+        body: formData
       })
       .then(response => {
         console.log('Registration response status:', response.status);

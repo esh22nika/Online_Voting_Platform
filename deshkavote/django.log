@@ -258,3 +258,4 @@ Successful login for voter: ABC1234567
 Login attempt for voter ID: AKS1234567
 Successful login for voter: AKS1234567
 Admin 'admin' logged in.
+Registration error: strptime() argument 1 must be str, not None

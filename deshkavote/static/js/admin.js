@@ -163,40 +163,105 @@ function approveVoter(voterId, voterIdText) {
     const button = event.target.closest('button');
     const originalText = button.innerHTML;
     
-    // Show loading state
-    button.disabled = true;
-    button.innerHTML = '<span class="loading-spinner" style="display:inline-block;"></span> Processing...';
-    
-    // Send approval request
-    fetch(`/api/approve-voter/`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCSRFToken(),
-        },
-        body: JSON.stringify({ voter_id: voterId }),
-    })
+    // Check if voter has documents before quick approve
+    fetch(`/api/voter-details/${voterId}/`)
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Remove from pending table
-            const row = document.getElementById(`voter-${voterId}`);
-            if (row) row.remove();
+            const voter = data.voter;
             
-            // Update counters
-            updateVoterCounters(-1, 1, 0);
+            // Check if documents are uploaded
+            if (!voter.aadhar_document || !voter.pan_document || !voter.voter_id_document) {
+                Swal.fire({
+                    title: 'Missing Documents',
+                    html: `This voter hasn't uploaded all required documents:<br>
+                           ${!voter.aadhar_document ? '❌ Aadhar Card<br>' : ''}
+                           ${!voter.pan_document ? '❌ PAN Card<br>' : ''}
+                           ${!voter.voter_id_document ? '❌ Voter ID Card<br>' : ''}
+                           <br>Please ask the voter to upload documents or view details to approve anyway.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'View Details',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        viewVoterDetails(voterId);
+                    }
+                });
+                return;
+            }
             
-            // Show success message
-            showToast('Voter approved successfully', 'success');
-            addActivityLog(`Approved voter: ${voterIdText}`);
-        } else {
-            throw new Error(data.message || 'Failed to approve voter');
+            // Ask if admin wants to verify documents first
+            Swal.fire({
+                title: 'Quick Approve',
+                html: `Do you want to:<br><br>
+                       <button class="btn btn-primary" onclick="viewVoterDetails('${voterId}'); Swal.close();">
+                           View & Verify Documents
+                       </button>
+                       <br><br>OR<br><br>
+                       <button class="btn btn-success" onclick="quickApproveWithoutVerification('${voterId}', '${voterIdText}'); Swal.close();">
+                           Quick Approve (Skip Document Verification)
+                       </button>`,
+                showConfirmButton: false,
+                showCancelButton: true,
+                cancelButtonText: 'Cancel'
+            });
         }
-    })
-    .catch(error => {
-        showToast(error.message, 'error');
-        button.disabled = false;
-        button.innerHTML = originalText;
+    });
+}
+
+// Add this new function for quick approve without verification
+function quickApproveWithoutVerification(voterId, voterIdText) {
+    Swal.fire({
+        title: 'Confirm Quick Approve',
+        text: `Approve ${voterIdText} without verifying documents?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        confirmButtonText: 'Yes, Approve'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: 'Processing...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            fetch(`/api/approve-voter/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken(),
+                },
+                body: JSON.stringify({ voter_id: voterId }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const row = document.getElementById(`voter-${voterId}`);
+                    if (row) row.remove();
+                    
+                    updateVoterCounters(-1, 1, 0);
+                    
+                    Swal.fire({
+                        title: 'Approved!',
+                        text: 'Voter approved successfully',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    
+                    addActivityLog(`Quick approved voter: ${voterIdText}`);
+                } else {
+                    throw new Error(data.message || 'Failed to approve voter');
+                }
+            })
+            .catch(error => {
+                Swal.fire('Error', error.message, 'error');
+            });
+        }
     });
 }
 
@@ -1233,18 +1298,18 @@ function downloadVotersListByRegion() {
 
 // Modal functions
 function showVoterDetailsModal(voter) {
-    // Create and show voter details modal
     const modalHtml = `
         <div class="modal fade" id="voterDetailsModal" tabindex="-1">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Voter Details</h5>
+                        <h5 class="modal-title">Voter Details: ${voter.full_name}</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <div class="row">
                             <div class="col-md-6">
+                                <h6>Personal Information</h6>
                                 <p><strong>Voter ID:</strong> ${voter.voter_id}</p>
                                 <p><strong>Name:</strong> ${voter.full_name}</p>
                                 <p><strong>Email:</strong> ${voter.email}</p>
@@ -1253,6 +1318,7 @@ function showVoterDetailsModal(voter) {
                                 <p><strong>Gender:</strong> ${voter.gender}</p>
                             </div>
                             <div class="col-md-6">
+                                <h6>Address</h6>
                                 <p><strong>Address:</strong> ${voter.street_address}</p>
                                 <p><strong>City:</strong> ${voter.city}</p>
                                 <p><strong>State:</strong> ${voter.state}</p>
@@ -1260,29 +1326,178 @@ function showVoterDetailsModal(voter) {
                                 <p><strong>Status:</strong> <span class="badge bg-${voter.approval_status === 'approved' ? 'success' : voter.approval_status === 'rejected' ? 'danger' : 'warning'}">${voter.approval_status}</span></p>
                             </div>
                         </div>
+                        
+                        <hr>
+                        <h6>Uploaded Documents</h6>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label><strong>Aadhar Card</strong></label><br>
+                                ${voter.aadhar_document ? 
+                                    `<a href="${voter.aadhar_document}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
+                                        <i class="fas fa-eye"></i> View Document
+                                    </a>` : 
+                                    '<span class="text-muted">Not uploaded</span>'}
+                                <div class="form-check mt-2">
+                                    <input type="checkbox" class="form-check-input" id="aadhar_verify" ${voter.aadhar_verified ? 'checked' : ''}>
+                                    <label class="form-check-label" for="aadhar_verify">
+                                        <i class="fas fa-check-circle text-success"></i> Verified
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label><strong>PAN Card</strong></label><br>
+                                ${voter.pan_document ? 
+                                    `<a href="${voter.pan_document}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
+                                        <i class="fas fa-eye"></i> View Document
+                                    </a>` : 
+                                    '<span class="text-muted">Not uploaded</span>'}
+                                <div class="form-check mt-2">
+                                    <input type="checkbox" class="form-check-input" id="pan_verify" ${voter.pan_verified ? 'checked' : ''}>
+                                    <label class="form-check-label" for="pan_verify">
+                                        <i class="fas fa-check-circle text-success"></i> Verified
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label><strong>Voter ID Card</strong></label><br>
+                                ${voter.voter_id_document ? 
+                                    `<a href="${voter.voter_id_document}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
+                                        <i class="fas fa-eye"></i> View Document
+                                    </a>` : 
+                                    '<span class="text-muted">Not uploaded</span>'}
+                                <div class="form-check mt-2">
+                                    <input type="checkbox" class="form-check-input" id="voterid_verify" ${voter.voter_id_verified ? 'checked' : ''}>
+                                    <label class="form-check-label" for="voterid_verify">
+                                        <i class="fas fa-check-circle text-success"></i> Verified
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i> Close
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="verifyAndApproveVoter('${voter.id}')">
+                            <i class="fas fa-check-double"></i> Verify & Approve Voter
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     `;
-    
+   
     // Remove existing modal if any
     const existingModal = document.getElementById('voterDetailsModal');
     if (existingModal) {
         existingModal.remove();
     }
-    
+   
     // Add modal to body and show
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     const modal = new bootstrap.Modal(document.getElementById('voterDetailsModal'));
     modal.show();
-    
+   
     // Remove modal from DOM when hidden
     document.getElementById('voterDetailsModal').addEventListener('hidden.bs.modal', function() {
         this.remove();
     });
 }
-
+function verifyAndApproveVoter(voterId) {
+    const aadharVerified = document.getElementById('aadhar_verify').checked;
+    const panVerified = document.getElementById('pan_verify').checked;
+    const voterIdVerified = document.getElementById('voterid_verify').checked;
+    
+    // Check if at least all documents are verified
+    if (!aadharVerified || !panVerified || !voterIdVerified) {
+        Swal.fire({
+            title: 'Incomplete Verification',
+            text: 'Please verify all documents before approving the voter.',
+            icon: 'warning',
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
+    
+    // Confirm approval
+    Swal.fire({
+        title: 'Confirm Approval',
+        text: 'Are you sure you want to approve this voter? This will activate their account.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, Approve!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Show loading
+            Swal.fire({
+                title: 'Processing...',
+                text: 'Verifying and approving voter',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            fetch('/api/verify-and-approve-voter/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify({
+                    voter_id: voterId,
+                    aadhar_verified: aadharVerified,
+                    pan_verified: panVerified,
+                    voter_id_verified: voterIdVerified
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Close the modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('voterDetailsModal'));
+                    if (modal) modal.hide();
+                    
+                    // Show success message
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Voter has been verified and approved successfully.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    
+                    // Add activity log
+                    addActivityLog('Voter approved and verified successfully', 'success');
+                    
+                    // Reload page after short delay
+                    setTimeout(() => window.location.reload(), 2000);
+                } else {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: data.message || 'Failed to approve voter',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error approving voter:', error);
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'An error occurred while approving the voter.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            });
+        }
+    });
+}
 function showElectionMonitoringModal(electionId) {
     fetch(`/api/election-details/${electionId}/`)
     .then(response => response.json())

@@ -304,22 +304,22 @@
                                     </thead>
                                     <tbody>
                                         {% for voter in pending_voters %}
-                                        <tr id="voter-{{ voter.id }}">
-                                            <td>{{ voter.voter_id }}</td>
-                                            <td>{{ voter.full_name }}</td>
-                                            <td>{{ voter.email }}</td>
-                                            <td>{{ voter.city }}, {{ voter.state }}</td>
-                                            <td>{{ voter.created_at|date:"M d, Y" }}</td>
+                                        <tr id="voter-{{ voter.id }}" style="cursor: pointer;" onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor=''">
+                                            <td onclick="viewVoterDetails('{{ voter.id }}')">{{ voter.voter_id }}</td>
+                                            <td onclick="viewVoterDetails('{{ voter.id }}')">{{ voter.full_name }}</td>
+                                            <td onclick="viewVoterDetails('{{ voter.id }}')">{{ voter.email }}</td>
+                                            <td onclick="viewVoterDetails('{{ voter.id }}')">{{ voter.city }}, {{ voter.state }}</td>
+                                            <td onclick="viewVoterDetails('{{ voter.id }}')">{{ voter.created_at|date:"M d, Y" }}</td>
                                             <td>
                                                 <div class="voter-actions">
-                                                    <button class="btn btn-sm btn-approve" onclick="approveVoter('{{ voter.id }}', '{{ voter.voter_id }}')">
-                                                        <i class="fas fa-check"></i> Approve
+                                                    <button class="btn btn-sm btn-info" onclick="event.stopPropagation(); viewVoterDetails('{{ voter.id }}')">
+                                                        <i class="fas fa-eye"></i> View Details
                                                     </button>
-                                                    <button class="btn btn-sm btn-reject" onclick="showRejectModal('{{ voter.id }}', '{{ voter.voter_id }}')">
+                                                    <button class="btn btn-sm btn-approve" onclick="event.stopPropagation(); approveVoter('{{ voter.id }}', '{{ voter.voter_id }}')">
+                                                        <i class="fas fa-check"></i> Quick Approve
+                                                    </button>
+                                                    <button class="btn btn-sm btn-reject" onclick="event.stopPropagation(); showRejectModal('{{ voter.id }}', '{{ voter.voter_id }}')">
                                                         <i class="fas fa-times"></i> Reject
-                                                    </button>
-                                                    <button class="btn btn-sm btn-outline-info" onclick="viewVoterDetails('{{ voter.id }}')">
-                                                        <i class="fas fa-eye"></i> View
                                                     </button>
                                                 </div>
                                             </td>

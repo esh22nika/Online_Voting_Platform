@@ -203,31 +203,28 @@ def register_voter(request):
     if request.method == 'POST':
         try:
             with transaction.atomic():
-                # Handle both FormData and JSON
-                if request.content_type == 'application/json':
-                    data = json.loads(request.body)
-                else:
-                    data = {
-                        'firstName': request.POST.get('firstName'),
-                        'lastName': request.POST.get('lastName'),
-                        'email': request.POST.get('email'),
-                        'mobile': request.POST.get('mobile'),
-                        'dob': request.POST.get('dob'),
-                        'gender': request.POST.get('gender'),
-                        'parentSpouseName': request.POST.get('parentSpouseName'),
-                        'streetAddress': request.POST.get('streetAddress'),
-                        'city': request.POST.get('city'),
-                        'state': request.POST.get('state'),
-                        'pincode': request.POST.get('pincode'),
-                        'placeOfBirth': request.POST.get('placeOfBirth'),
-                        'voterId': request.POST.get('voterId'),
-                        'aadharNumber': request.POST.get('aadharNumber'),
-                        'panNumber': request.POST.get('panNumber'),
-                        'password': request.POST.get('password'),
-                        'constituency': request.POST.get('constituency', ''),
-                        'district': request.POST.get('district', ''),
-                    }
-
+                # Handle FormData (files) instead of JSON
+                data = {
+                    'firstName': request.POST.get('firstName'),
+                    'lastName': request.POST.get('lastName'),
+                    'email': request.POST.get('email'),
+                    'mobile': request.POST.get('mobile'),
+                    'dob': request.POST.get('dob'),
+                    'gender': request.POST.get('gender'),
+                    'parentSpouseName': request.POST.get('parentSpouseName'),
+                    'streetAddress': request.POST.get('streetAddress'),
+                    'city': request.POST.get('city'),
+                    'state': request.POST.get('state'),
+                    'pincode': request.POST.get('pincode'),
+                    'placeOfBirth': request.POST.get('placeOfBirth'),
+                    'voterId': request.POST.get('voterId'),
+                    'aadharNumber': request.POST.get('aadharNumber'),
+                    'panNumber': request.POST.get('panNumber'),
+                    'password': request.POST.get('password'),
+                }
+                aadhar_doc = request.FILES.get('aadhar_document')
+                pan_doc = request.FILES.get('pan_document')
+                voter_id_doc = request.FILES.get('voter_id_document')
                 # Enhanced validation
                 if Voter.objects.filter(voter_id=data['voterId']).exists():
                     return JsonResponse({
@@ -281,6 +278,9 @@ def register_voter(request):
                     pan_number=data['panNumber'],
                     constituency=data.get('constituency', ''),
                     district=data.get('district', ''),
+                    aadhar_document=aadhar_doc,  # ADD THIS
+                    pan_document=pan_doc,  # ADD THIS
+                    voter_id_document=voter_id_doc,  # ADD THIS
                     approval_status='pending'
                 )
 
@@ -361,6 +361,33 @@ def login_user(request):
 
                     try:
                         voter = Voter.objects.get(user=user)
+                        # CHECK IF OTP IS REQUESTED
+                        if data.get('request_otp'):
+                            if voter.approval_status == 'pending':
+                                return JsonResponse({
+                                    'success': False,
+                                    'message': 'Your account is pending approval.',
+                                    'pending_approval': True
+                                })
+                            elif voter.approval_status == 'rejected':
+                                return JsonResponse({
+                                    'success': False,
+                                    'message': f'Your account has been rejected. Reason: {voter.rejection_reason or "Contact admin"}'
+                                })
+                            elif voter.approval_status == 'approved' and user.is_active:
+                                # Send OTP
+                                success, message, otp = OTPService.send_otp(voter.mobile)
+                                if success:
+                                    logger.info(f"OTP sent to {voter.mobile}: {otp}")  # For development
+                                    return JsonResponse({
+                                        'success': True,
+                                        'otp_required': True,
+                                        'mobile': voter.mobile,
+                                        'message': 'OTP sent to your mobile'
+                                    })
+                                else:
+                                    return JsonResponse({'success': False, 'message': message})
+                       
                         if voter.approval_status == 'pending':
                             return JsonResponse({
                                 'success': False,
@@ -442,7 +469,67 @@ def login_user(request):
             })
 
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
-    
+
+@csrf_exempt
+def verify_otp(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            voter_id = data.get('voterId')
+            otp = data.get('otp')
+           
+            user = CustomUser.objects.get(username=voter_id)
+            voter = Voter.objects.get(user=user)
+           
+            # ADD THIS CHECK - Verify voter is approved before OTP verification
+            if voter.approval_status != 'approved' or not user.is_active:
+                return JsonResponse({
+                    'success': False, 
+                    'message': 'Your account is not activated. Please contact admin.'
+                })
+           
+            success, message = OTPService.verify_otp(voter.mobile, otp)
+           
+            if success:
+                login(request, user)
+               
+                # Create voter session
+                if not request.session.session_key:
+                    request.session.create()
+               
+                VoterSession.objects.create(
+                    voter=voter,
+                    session_key=request.session.session_key,
+                    ip_address=request.META.get('REMOTE_ADDR'),
+                    user_agent=request.META.get('HTTP_USER_AGENT', ''),
+                    device_fingerprint=hashlib.md5(request.META.get('HTTP_USER_AGENT', '').encode()).hexdigest()
+                )
+               
+                create_audit_log(
+                    'voter_login',
+                    user=user,
+                    details={'voter_id': voter_id, 'login_method': 'otp'},
+                    request=request
+                )
+               
+                return JsonResponse({
+                    'success': True,
+                    'message': 'OTP verified successfully',
+                    'redirect_url': '/voter/'
+                })
+            else:
+                return JsonResponse({'success': False, 'message': message})
+               
+        except CustomUser.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'User not found'})
+        except Voter.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Voter profile not found'})
+        except Exception as e:
+            logger.error(f"OTP verification error: {e}")
+            return JsonResponse({'success': False, 'message': 'Verification failed'})
+   
+    return JsonResponse({'success': False, 'message': 'Invalid request method'})
+
 def admin_login_page(request):
     """Admin login page view"""
     return render(request, 'admin_login.html')
@@ -499,12 +586,23 @@ def voter_dashboard(request):
 
     try:
         voter = Voter.objects.get(user=request.user)
+        # Calculate counts
+        all_elections = voter.get_eligible_elections()
+        voted_elections = Vote.objects.filter(voter=voter).values_list('election_id', flat=True)
+        active_elections_count = Election.objects.filter(
+            id__in=[e.id for e in all_elections],
+            status='active'
+        ).count()
+        votes_casted_count = Vote.objects.filter(voter=voter, status='finalized').count()
 
         if voter.approval_status != 'approved':
             context = {
                 'voter': voter,
                 'approval_status': voter.approval_status,
-                'rejection_reason': voter.rejection_reason if voter.approval_status == 'rejected' else None
+                'rejection_reason': voter.rejection_reason if voter.approval_status == 'rejected' else None,
+                'elections_data': [],
+                'active_elections_count': 0,
+                'votes_casted_count': 0
             }
             return render(request, 'voter.html', context)
 
@@ -533,7 +631,9 @@ def voter_dashboard(request):
         context = {
             'voter': voter,
             'elections_data': elections_data,
-            'approval_status': 'approved'
+            'approval_status': 'approved',
+            'active_elections_count': active_elections_count,
+            'votes_casted_count': votes_casted_count
         }
         return render(request, 'voter.html', context)
 
@@ -800,6 +900,7 @@ def get_election_statistics(request):
 def get_voter_details(request, voter_id):
     voter = get_object_or_404(Voter, id=voter_id)
     data = {
+        #'id': voter.id,
         'voter_id': voter.voter_id,
         'full_name': voter.full_name,
         'email': voter.email,
@@ -811,6 +912,13 @@ def get_voter_details(request, voter_id):
         'state': voter.state,
         'pincode': voter.pincode,
         'approval_status': voter.approval_status,
+                # ADD THESE LINES
+        'aadhar_document': voter.aadhar_document.url if voter.aadhar_document else None,
+        'pan_document': voter.pan_document.url if voter.pan_document else None,
+        'voter_id_document': voter.voter_id_document.url if voter.voter_id_document else None,
+        'aadhar_verified': voter.aadhar_verified,
+        'pan_verified': voter.pan_verified,
+        'voter_id_verified': voter.voter_id_verified,
     }
     return JsonResponse({'success': True, 'voter': data})
 
@@ -1901,20 +2009,6 @@ def send_otp(request):
             return render(request, 'send_otp.html', {'error': message})
     return render(request, 'send_otp.html')
 
-def verify_otp(request, mobile):
-    if request.method == 'POST':
-        otp_entered = request.POST.get('otp')
-        success, message = OTPService.verify_otp(mobile, otp_entered)
-        if success:
-            try:
-                user = CustomUser.objects.get(mobile=mobile)
-                login(request, user)
-                return redirect('voter_dashboard')  # Redirect to voter's dashboard
-            except CustomUser.DoesNotExist:
-                return render(request, 'verify_otp.html', {'error': 'User not found.'})
-        else:
-            return render(request, 'verify_otp.html', {'error': message})
-    return render(request, 'verify_otp.html', {'mobile': mobile})
 
 def upload_documents(request):
     if request.method == 'POST':
@@ -1925,3 +2019,57 @@ def upload_documents(request):
     else:
         form = DocumentUploadForm(instance=request.user.voter)
     return render(request, 'upload_documents.html', {'form': form})
+
+@csrf_exempt
+@login_required
+def verify_and_approve_voter(request):
+    if not (request.user.is_staff or request.user.role == 'admin'):
+        return JsonResponse({'success': False, 'message': 'Unauthorized'})
+
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                data = json.loads(request.body)
+                voter_id = data.get('voter_id')
+                
+                voter = get_object_or_404(Voter, id=voter_id)
+                
+                # Update verification status
+                voter.aadhar_verified = data.get('aadhar_verified', False)
+                voter.pan_verified = data.get('pan_verified', False)
+                voter.voter_id_verified = data.get('voter_id_verified', False)
+                
+                # Approve voter
+                voter.approval_status = 'approved'
+                voter.approved_by = request.user
+                voter.approval_date = timezone.now()
+                voter.save()
+                
+                # Activate user account
+                voter.user.is_active = True
+                voter.user.save()
+                
+                create_audit_log(
+                    'voter_approved',
+                    user=request.user,
+                    details={
+                        'voter_id': voter.voter_id,
+                        'aadhar_verified': voter.aadhar_verified,
+                        'pan_verified': voter.pan_verified,
+                        'voter_id_verified': voter.voter_id_verified
+                    },
+                    request=request
+                )
+                
+                cache.delete('election_stats')
+                cache.delete(f"voter_elections_{voter.id}")
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': f'Voter {voter.voter_id} verified and approved'
+                })
+                
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+    
+    return JsonResponse({'success': False, 'message': 'Invalid request method'})

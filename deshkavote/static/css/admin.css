@@ -129,3 +129,35 @@
     background-color: white;
     border-bottom-color: white;
 }
+
+/* Pending voter row hover effect */
+#pendingVotersTable tbody tr {
+    transition: all 0.2s ease;
+}
+
+#pendingVotersTable tbody tr:hover {
+    transform: translateX(2px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Document verification checkboxes */
+.form-check-input:checked {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+/* Modal document links */
+.modal-body a.btn-outline-primary:hover {
+    transform: scale(1.05);
+    transition: all 0.2s ease;
+}
+
+/* Verification badges animation */
+@keyframes badgePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.badge.bg-warning {
+    animation: badgePulse 2s infinite;
+}

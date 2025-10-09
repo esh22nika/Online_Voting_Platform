@@ -144,40 +144,4 @@ admin.site.site_title = "DeshKaVote Admin"
 admin.site.index_title = "Welcome to DeshKaVote Administration"
 
 # Register your models here.
-class VoterAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'voter_id', 'approval_status', 'aadhar_verified', 'pan_verified', 'voter_id_verified')
-    list_filter = ('approval_status', 'state')
-    search_fields = ('first_name', 'last_name', 'voter_id')
-    readonly_fields = ('aadhar_document_link', 'pan_document_link', 'voter_id_document_link')
-    fieldsets = (
-        (None, {
-            'fields': ('user', 'first_name', 'last_name', 'email', 'mobile', 'date_of_birth', 'gender')
-        }),
-        ('Verification', {
-            'fields': ('aadhar_verified', 'pan_verified', 'voter_id_verified', 'aadhar_document_link', 'pan_document_link', 'voter_id_document_link')
-        }),
-    )
-
-    def aadhar_document_link(self, obj):
-        if obj.aadhar_document:
-            return f'<a href="{obj.aadhar_document.url}" target="_blank">View Aadhar</a>'
-        return "Not Uploaded"
-    aadhar_document_link.allow_tags = True
-    aadhar_document_link.short_description = 'Aadhar Document'
-
-    def pan_document_link(self, obj):
-        if obj.pan_document:
-            return f'<a href="{obj.pan_document.url}" target="_blank">View PAN</a>'
-        return "Not Uploaded"
-    pan_document_link.allow_tags = True
-    pan_document_link.short_description = 'PAN Document'
-
-    def voter_id_document_link(self, obj):
-        if obj.voter_id_document:
-            return f'<a href="{obj.voter_id_document.url}" target="_blank">View Voter ID</a>'
-        return "Not Uploaded"
-    voter_id_document_link.allow_tags = True
-    voter_id_document_link.short_description = 'Voter ID Document'
-
-admin.site.register(Voter, VoterAdmin)
 admin.site.register(OTPVerification)
