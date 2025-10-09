@@ -202,29 +202,68 @@ def register_voter(request):
     """Enhanced voter registration with security features"""
     if request.method == 'POST':
         try:
+            # CRITICAL DEBUG: Print everything we receive
+            print("\n" + "="*50)
+            print("REGISTRATION REQUEST RECEIVED")
+            print("="*50)
+            print(f"Content-Type: {request.content_type}")
+            print(f"Method: {request.method}")
+            print(f"\nPOST Data Keys: {list(request.POST.keys())}")
+            print(f"POST Data: {dict(request.POST)}")
+            print(f"\nFILES Keys: {list(request.FILES.keys())}")
+            print("="*50 + "\n")
+            
             with transaction.atomic():
                 # Handle FormData (files) instead of JSON
                 data = {
-                    'firstName': request.POST.get('firstName'),
-                    'lastName': request.POST.get('lastName'),
-                    'email': request.POST.get('email'),
-                    'mobile': request.POST.get('mobile'),
-                    'dob': request.POST.get('dob'),
-                    'gender': request.POST.get('gender'),
-                    'parentSpouseName': request.POST.get('parentSpouseName'),
-                    'streetAddress': request.POST.get('streetAddress'),
-                    'city': request.POST.get('city'),
-                    'state': request.POST.get('state'),
-                    'pincode': request.POST.get('pincode'),
-                    'placeOfBirth': request.POST.get('placeOfBirth'),
-                    'voterId': request.POST.get('voterId'),
-                    'aadharNumber': request.POST.get('aadharNumber'),
-                    'panNumber': request.POST.get('panNumber'),
-                    'password': request.POST.get('password'),
+                    'firstName': request.POST.get('firstName', '').strip(),
+                    'lastName': request.POST.get('lastName', '').strip(),
+                    'email': request.POST.get('email', '').strip(),
+                    'mobile': request.POST.get('mobile', '').strip(),
+                    'dob': request.POST.get('dob', '').strip(),
+                    'gender': request.POST.get('gender', '').strip(),
+                    'parentSpouseName': request.POST.get('parentSpouseName', '').strip(),
+                    'streetAddress': request.POST.get('streetAddress', '').strip(),
+                    'city': request.POST.get('city', '').strip(),
+                    'state': request.POST.get('state', '').strip(),
+                    'pincode': request.POST.get('pincode', '').strip(),
+                    'placeOfBirth': request.POST.get('placeOfBirth', '').strip(),
+                    'voterId': request.POST.get('voterId', '').strip(),
+                    'aadharNumber': request.POST.get('aadharNumber', '').strip(),
+                    'panNumber': request.POST.get('panNumber', '').strip(),
+                    'password': request.POST.get('password', ''),
                 }
+                
+                print("\nExtracted Data:")
+                for key, value in data.items():
+                    print(f"{key}: '{value}' (empty: {not value})")
+                
+                # Validate required fields
+                required_fields = ['firstName', 'lastName', 'email', 'mobile', 'dob', 
+                                 'gender', 'parentSpouseName', 'streetAddress', 'city', 
+                                 'state', 'pincode', 'placeOfBirth', 'voterId', 
+                                 'aadharNumber', 'panNumber', 'password']
+                
+                missing_fields = [field for field in required_fields if not data.get(field)]
+                
+                if missing_fields:
+                    print(f"\nMISSING FIELDS: {missing_fields}")
+                    return JsonResponse({
+                        'success': False,
+                        'message': f'Missing required fields: {", ".join(missing_fields)}'
+                    })
+                
+                # Specifically check DOB
+                if not data['dob']:
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'Date of birth is required.'
+                    })
+
                 aadhar_doc = request.FILES.get('aadhar_document')
                 pan_doc = request.FILES.get('pan_document')
                 voter_id_doc = request.FILES.get('voter_id_document')
+
                 # Enhanced validation
                 if Voter.objects.filter(voter_id=data['voterId']).exists():
                     return JsonResponse({
@@ -239,7 +278,14 @@ def register_voter(request):
                     })
 
                 # Validate age (must be 18+)
-                dob = datetime.strptime(data['dob'], '%Y-%m-%d').date()
+                try:
+                    dob = datetime.strptime(data['dob'], '%Y-%m-%d').date()
+                except ValueError as e:
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'Invalid date format. Please use YYYY-MM-DD format.'
+                    })
+                
                 today = timezone.now().date()
                 age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
 
@@ -278,11 +324,13 @@ def register_voter(request):
                     pan_number=data['panNumber'],
                     constituency=data.get('constituency', ''),
                     district=data.get('district', ''),
-                    aadhar_document=aadhar_doc,  # ADD THIS
-                    pan_document=pan_doc,  # ADD THIS
-                    voter_id_document=voter_id_doc,  # ADD THIS
+                    aadhar_document=aadhar_doc,
+                    pan_document=pan_doc,
+                    voter_id_document=voter_id_doc,
                     approval_status='pending'
                 )
+
+                print(f"\nSUCCESS: Voter {voter.voter_id} created successfully!")
 
                 # Create audit log
                 create_audit_log(
@@ -312,7 +360,9 @@ def register_voter(request):
                 })
 
         except Exception as e:
-            logger.error(f"Registration error: {str(e)}")
+            import traceback
+            print(f"\nEXCEPTION: {str(e)}")
+            print(traceback.format_exc())
             return JsonResponse({
                 'success': False,
                 'message': f'Registration failed: {str(e)}'
@@ -2030,9 +2080,29 @@ def verify_and_approve_voter(request):
         try:
             with transaction.atomic():
                 data = json.loads(request.body)
-                voter_id = data.get('voter_id')
+                voter_identifier = data.get('voter_id')
                 
-                voter = get_object_or_404(Voter, id=voter_id)
+                print(f"Looking for voter with identifier: {voter_identifier}")  # Debug
+                
+                # Try to find voter by database ID first, then by voter_id
+                try:
+                    # First try: assume it's a database ID (integer or UUID)
+                    if voter_identifier.isdigit():
+                        voter = Voter.objects.get(id=int(voter_identifier))
+                    else:
+                        # Try as UUID
+                        try:
+                            voter = Voter.objects.get(id=voter_identifier)
+                        except (Voter.DoesNotExist, ValueError):
+                            # Fallback: try as voter_id string
+                            voter = Voter.objects.get(voter_id=voter_identifier)
+                except Voter.DoesNotExist:
+                    return JsonResponse({
+                        'success': False, 
+                        'message': f'No voter found with identifier: {voter_identifier}'
+                    })
+                
+                print(f"Found voter: {voter.voter_id} (DB ID: {voter.id})")  # Debug
                 
                 # Update verification status
                 voter.aadhar_verified = data.get('aadhar_verified', False)
@@ -2054,6 +2124,7 @@ def verify_and_approve_voter(request):
                     user=request.user,
                     details={
                         'voter_id': voter.voter_id,
+                        'database_id': str(voter.id),
                         'aadhar_verified': voter.aadhar_verified,
                         'pan_verified': voter.pan_verified,
                         'voter_id_verified': voter.voter_id_verified
@@ -2066,10 +2137,11 @@ def verify_and_approve_voter(request):
                 
                 return JsonResponse({
                     'success': True,
-                    'message': f'Voter {voter.voter_id} verified and approved'
+                    'message': f'Voter {voter.voter_id} ({voter.full_name}) verified and approved successfully'
                 })
                 
         except Exception as e:
-            return JsonResponse({'success': False, 'message': str(e)})
+            logger.error(f"Error in verify_and_approve_voter: {str(e)}")
+            return JsonResponse({'success': False, 'message': f'Error: {str(e)}'})
     
     return JsonResponse({'success': False, 'message': 'Invalid request method'})

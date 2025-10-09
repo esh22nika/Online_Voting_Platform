@@ -259,3 +259,53 @@ Login attempt for voter ID: AKS1234567
 Successful login for voter: AKS1234567
 Admin 'admin' logged in.
 Registration error: strptime() argument 1 must be str, not None
+Registration error: strptime() argument 1 must be str, not None
+Login attempt for voter ID: ESH1234567
+Successful login for voter: ESH1234567
+Admin 'admin' logged in.
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Login attempt for voter ID: ABC1234567
+Successful login for voter: ABC1234567
+Vote casting attempt by ABC1234567: {'election_id': 'f2085c1f-d28a-474b-8f63-739a99aca0e6', 'candidate_id': 'd0ef8e08-630c-451d-9bb3-3258c8191e7c'}
+Vote created: c0f76828-7921-48a7-b90f-8717ec520491
+Registration POST data keys: dict_keys([])
+Registration FILES keys: dict_keys([])
+DOB received: ''
+Missing fields: ['firstName', 'lastName', 'email', 'mobile', 'dob', 'gender', 'parentSpouseName', 'streetAddress', 'city', 'state', 'pincode', 'placeOfBirth', 'voterId', 'aadharNumber', 'panNumber', 'password']
+Registration POST data keys: dict_keys([])
+Registration FILES keys: dict_keys([])
+DOB received: ''
+Missing fields: ['firstName', 'lastName', 'email', 'mobile', 'dob', 'gender', 'parentSpouseName', 'streetAddress', 'city', 'state', 'pincode', 'placeOfBirth', 'voterId', 'aadharNumber', 'panNumber', 'password']
+Admin 'admin' logged in.
+Admin 'admin' logged in.
+Admin 'admin' logged in.
+Admin 'admin' logged in.
+Error in verify_and_approve_voter: No Voter matches the given query.
+Error in verify_and_approve_voter: No Voter matches the given query.
+Admin 'admin' logged in.
+Admin 'admin' logged in.
+Admin 'admin' logged in.
+Login attempt for voter ID: RIT1234567
+Invalid credentials for voter: RIT1234567
+Login attempt for voter ID: RIT1234567
+Invalid credentials for voter: RIT1234567
+Login attempt for voter ID: RIT1234567
+Invalid credentials for voter: RIT1234567
+Login attempt for voter ID: RIT1234567
+Invalid credentials for voter: RIT1234567
+Login attempt for voter ID: RIT1234567
+Invalid credentials for voter: RIT1234567
+Login attempt for voter ID: RIT1234567
+Login attempt for voter ID: RIT1234567
+Login attempt for voter ID: RIT1234567
+Invalid credentials for voter: RIT1234567
+Admin 'admin' logged in.
+Login attempt for voter ID: NEW1234567
+Invalid credentials for voter: NEW1234567
+Login attempt for voter ID: NEW1234567
+Invalid credentials for voter: NEW1234567
+Login attempt for voter ID: ESH1234567
+Login attempt for voter ID: AKS1234567

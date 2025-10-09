@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const dobInput = document.getElementById('dob');
   const dobWarning = document.getElementById('dobWarning');
 
-  // Debug: Log if elements are found
+  // Debug: Log if elements are found - FIXED: Removed extra closing brace
   console.log('Elements found:', {
     tabSignIn: !!tabSignIn,
     tabRegister: !!tabRegister,
@@ -537,159 +537,144 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
+  // Registration form submission handler
   registerForm.addEventListener('submit', function (e) {
     e.preventDefault();
     hideMessage();
-    let isFormValid = true;
+    
+    console.log('=== REGISTRATION FORM SUBMISSION DEBUG ===');
+    
+    // Check if all input elements exist
+    const fieldIds = ['firstName', 'lastName', 'email', 'mobile', 'dob', 'gender', 
+                     'parentSpouseName', 'streetAddress', 'city', 'state', 'pincode', 
+                     'placeOfBirth', 'registerVoterId', 'aadharNumber', 'panNumber', 'registerPassword'];
+    
+    console.log('Checking if all fields exist:');
+    fieldIds.forEach(id => {
+        const element = document.getElementById(id);
+        console.log(`${id}: ${element ? 'EXISTS' : 'MISSING'} - Value: ${element ? element.value : 'N/A'}`);
+    });
+    
+    let isFormValidCheck = true;
 
     // Validate all fields one final time
     validations.forEach(({ id, test, msg }) => {
-      const input = document.getElementById(id);
-      if (input) {
-        const isValid = test(input.value.trim());
-        markField(input, isValid, msg);
-        if (!isValid) isFormValid = false;
-      }
+        const input = document.getElementById(id);
+        if (input) {
+            const isValid = test(input.value.trim());
+            markField(input, isValid, msg);
+            if (!isValid) {
+                console.log(`Validation failed for ${id}: ${msg}`);
+                isFormValidCheck = false;
+            }
+        }
     });
 
-    if (isFormValid) {
-      // All fields are valid, proceed with registration
-      console.log('Form is valid, submitting...');
-      
-      // Show loading state
-      const submitButton = registerForm.querySelector('button[type="submit"]') || registerForm.querySelector('input[type="submit"]');
-      const originalButtonText = submitButton ? submitButton.textContent || submitButton.value : '';
-      if (submitButton) {
-        submitButton.disabled = true;
-        if (submitButton.textContent !== undefined) {
-          submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Registering...';
-        } else {
-          submitButton.value = 'Registering...';
-        }
-      }
-
-      // Collect form data using FormData for file uploads
-      const formData = new FormData();
-      
-      // Add all text fields - ensure they have values
-      const firstName = document.getElementById('firstName').value.trim();
-      const lastName = document.getElementById('lastName').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const mobile = document.getElementById('mobile').value.trim();
-      const dob = document.getElementById('dob').value;
-      const gender = document.getElementById('gender').value;
-      const parentSpouseName = document.getElementById('parentSpouseName').value.trim();
-      const streetAddress = document.getElementById('streetAddress').value.trim();
-      const city = document.getElementById('city').value.trim();
-      const state = document.getElementById('state').value;
-      const pincode = document.getElementById('pincode').value.trim();
-      const placeOfBirth = document.getElementById('placeOfBirth').value.trim();
-      const voterId = document.getElementById('registerVoterId').value.trim();
-      const aadharNumber = document.getElementById('aadharNumber').value.trim();
-      const panNumber = document.getElementById('panNumber').value.trim();
-      const password = document.getElementById('registerPassword').value;
-
-      // Validate that required fields have values before appending
-      if (!dob) {
-        showMessage('Please select your date of birth', 'danger');
-        if (submitButton) {
-          submitButton.disabled = false;
-          if (submitButton.textContent !== undefined) {
-            submitButton.textContent = originalButtonText;
-          } else {
-            submitButton.value = originalButtonText;
-          }
+    if (!isFormValidCheck) {
+        showMessage('Please fix all validation errors before submitting.', 'danger');
+        const firstInvalidField = registerForm.querySelector('.is-invalid');
+        if (firstInvalidField) {
+            firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstInvalidField.focus();
         }
         return;
-      }
+    }
 
-      // Append all fields to FormData
-      formData.append('firstName', firstName);
-      formData.append('lastName', lastName);
-      formData.append('email', email);
-      formData.append('mobile', mobile);
-      formData.append('dob', dob);
-      formData.append('gender', gender);
-      formData.append('parentSpouseName', parentSpouseName);
-      formData.append('streetAddress', streetAddress);
-      formData.append('city', city);
-      formData.append('state', state);
-      formData.append('pincode', pincode);
-      formData.append('placeOfBirth', placeOfBirth);
-      formData.append('voterId', voterId);
-      formData.append('aadharNumber', aadharNumber);
-      formData.append('panNumber', panNumber);
-      formData.append('password', password);
+    console.log('Form validation passed, preparing submission...');
 
-      // Add file uploads
-      const aadharFile = document.getElementById('aadhar_document').files[0];
-      const panFile = document.getElementById('pan_document').files[0];
-      const voterIdFile = document.getElementById('voter_id_document').files[0];
-      
-      if (aadharFile) formData.append('aadhar_document', aadharFile);
-      if (panFile) formData.append('pan_document', panFile);
-      if (voterIdFile) formData.append('voter_id_document', voterIdFile);
+    // Show loading state
+    const submitButton = registerForm.querySelector('button[type="submit"]');
+    const originalButtonText = submitButton.textContent;
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Registering...';
 
-      // Send registration request to the backend with approval system support
-      fetch('/register/', {
+    // Create FormData
+    console.log('\n=== Creating FormData ===');
+    const formData = new FormData();
+    
+    // Manually add each field
+    formData.append('firstName', document.getElementById('firstName').value);
+    formData.append('lastName', document.getElementById('lastName').value);
+    formData.append('email', document.getElementById('email').value);
+    formData.append('mobile', document.getElementById('mobile').value);
+    formData.append('dob', document.getElementById('dob').value);
+    formData.append('gender', document.getElementById('gender').value);
+    formData.append('parentSpouseName', document.getElementById('parentSpouseName').value);
+    formData.append('streetAddress', document.getElementById('streetAddress').value);
+    formData.append('city', document.getElementById('city').value);
+    formData.append('state', document.getElementById('state').value);
+    formData.append('pincode', document.getElementById('pincode').value);
+    formData.append('placeOfBirth', document.getElementById('placeOfBirth').value);
+    formData.append('voterId', document.getElementById('registerVoterId').value);
+    formData.append('aadharNumber', document.getElementById('aadharNumber').value);
+    formData.append('panNumber', document.getElementById('panNumber').value);
+    formData.append('password', document.getElementById('registerPassword').value);
+    
+    // Add files
+    const aadharDoc = document.getElementById('aadhar_document');
+    const panDoc = document.getElementById('pan_document');
+    const voterIdDoc = document.getElementById('voter_id_document');
+    
+    if (aadharDoc && aadharDoc.files[0]) {
+        formData.append('aadhar_document', aadharDoc.files[0]);
+    }
+    if (panDoc && panDoc.files[0]) {
+        formData.append('pan_document', panDoc.files[0]);
+    }
+    if (voterIdDoc && voterIdDoc.files[0]) {
+        formData.append('voter_id_document', voterIdDoc.files[0]);
+    }
+    
+    console.log('FormData contents:');
+    for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value instanceof File ? value.name : value}`);
+    }
+
+    console.log('\n=== SENDING REQUEST ===');
+
+    // Send registration request
+    fetch('/register/', {
         method: 'POST',
         headers: {
-          'X-CSRFToken': getCookie('csrftoken')
+            'X-CSRFToken': getCookie('csrftoken')
         },
         body: formData
-      })
-      .then(response => {
-        console.log('Registration response status:', response.status);
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
         return response.json();
-      })
-      .then(result => {
+    })
+    .then(result => {
+        console.log('Server response:', result);
+        
         // Reset button state
-        if (submitButton) {
-          submitButton.disabled = false;
-          if (submitButton.textContent !== undefined) {
-            submitButton.textContent = originalButtonText;
-          } else {
-            submitButton.value = originalButtonText;
-          }
-        }
+        submitButton.disabled = false;
+        submitButton.textContent = originalButtonText;
 
         if (result.success) {
-          showMessage(result.message, 'success');
-          // Switch to sign in form after successful registration
-          setTimeout(() => {
-            switchForm('signin');
-            // Clear the registration form
-            registerForm.reset();
-          }, 2000);
+            showMessage(result.message, 'success');
+            setTimeout(() => {
+                switchForm('signin');
+                registerForm.reset();
+                // Clear validation states
+                document.querySelectorAll('.is-valid, .is-invalid').forEach(el => {
+                    el.classList.remove('is-valid', 'is-invalid');
+                    el.style.removeProperty('border-color');
+                    el.style.removeProperty('box-shadow');
+                });
+            }, 2000);
         } else {
-          showMessage(result.message, 'danger');
+            showMessage(result.message, 'danger');
         }
-      })
-      .catch(error => {
+    })
+    .catch(error => {
         console.error('Registration error:', error);
         // Reset button state
-        if (submitButton) {
-          submitButton.disabled = false;
-          if (submitButton.textContent !== undefined) {
-            submitButton.textContent = originalButtonText;
-          } else {
-            submitButton.value = originalButtonText;
-          }
-        }
+        submitButton.disabled = false;
+        submitButton.textContent = originalButtonText;
         showMessage('Registration failed. Please try again.', 'danger');
-      });
-    } else {
-      // Scroll to first invalid field
-      const firstInvalidField = registerForm.querySelector('.is-invalid');
-      if (firstInvalidField) {
-        firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        firstInvalidField.focus();
-      }
-    }
+    });
   });
 
-  // Initial submit button state
-  setTimeout(() => {
-    updateSubmitButton();
-  }, 100);
+// CLOSING BRACE FOR DOMContentLoaded - Make sure this is at the end!
 });

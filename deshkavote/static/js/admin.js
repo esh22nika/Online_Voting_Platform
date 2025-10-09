@@ -1298,6 +1298,9 @@ function downloadVotersListByRegion() {
 
 // Modal functions
 function showVoterDetailsModal(voter) {
+    console.log('Full voter object in modal:', voter);
+    console.log('Voter ID (voter_id):', voter.voter_id);
+    console.log('Voter database ID (id):', voter.id);
     const modalHtml = `
         <div class="modal fade" id="voterDetailsModal" tabindex="-1">
             <div class="modal-dialog modal-lg">
@@ -1380,7 +1383,7 @@ function showVoterDetailsModal(voter) {
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                             <i class="fas fa-times"></i> Close
                         </button>
-                        <button type="button" class="btn btn-success" onclick="verifyAndApproveVoter('${voter.id}')">
+                        <button type="button" class="btn btn-success" onclick="verifyAndApproveVoter('${voter.voter_id}')">
                             <i class="fas fa-check-double"></i> Verify & Approve Voter
                         </button>
                     </div>
@@ -1405,12 +1408,17 @@ function showVoterDetailsModal(voter) {
         this.remove();
     });
 }
-function verifyAndApproveVoter(voterId) {
+// Verify and approve voter with document verification
+function verifyAndApproveVoter(voterIdString) {
+    console.log('=== DEBUG INFO ===');
+    console.log('Voter Database ID:', voterIdString);
+    console.log('==================');
+    
     const aadharVerified = document.getElementById('aadhar_verify').checked;
     const panVerified = document.getElementById('pan_verify').checked;
     const voterIdVerified = document.getElementById('voterid_verify').checked;
     
-    // Check if at least all documents are verified
+    // Check if all documents are verified
     if (!aadharVerified || !panVerified || !voterIdVerified) {
         Swal.fire({
             title: 'Incomplete Verification',
@@ -1443,6 +1451,9 @@ function verifyAndApproveVoter(voterId) {
                 }
             });
             
+            console.log('Sending voter database ID:', voterIdString);
+            
+            // Send the request
             fetch('/api/verify-and-approve-voter/', {
                 method: 'POST',
                 headers: {
@@ -1450,47 +1461,52 @@ function verifyAndApproveVoter(voterId) {
                     'X-CSRFToken': getCSRFToken()
                 },
                 body: JSON.stringify({
-                    voter_id: voterId,
+                    voter_id: voterIdString,  // This is the database ID
                     aadhar_verified: aadharVerified,
                     pan_verified: panVerified,
                     voter_id_verified: voterIdVerified
                 })
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json().then(data => {
+                    return { ok: response.ok, data: data };
+                });
+            })
+            .then(({ ok, data }) => {
+                if (ok && data.success) {
                     // Close the modal
                     const modal = bootstrap.Modal.getInstance(document.getElementById('voterDetailsModal'));
                     if (modal) modal.hide();
                     
+                    // Remove from pending table
+                    const row = document.getElementById(`voter-${voterIdString}`);
+                    if (row) row.remove();
+                    
+                    // Update counters
+                    updateVoterCounters(-1, 1, 0);
+                    
                     // Show success message
                     Swal.fire({
                         title: 'Success!',
-                        text: 'Voter has been verified and approved successfully.',
+                        text: data.message || 'Voter has been verified and approved successfully.',
                         icon: 'success',
                         timer: 2000,
                         showConfirmButton: false
                     });
                     
                     // Add activity log
-                    addActivityLog('Voter approved and verified successfully', 'success');
+                    addActivityLog(`Voter verified and approved: ${data.message || 'Success'}`, 'success');
                     
-                    // Reload page after short delay
-                    setTimeout(() => window.location.reload(), 2000);
                 } else {
-                    Swal.fire({
-                        title: 'Error!',
-                        text: data.message || 'Failed to approve voter',
-                        icon: 'error',
-                        confirmButtonText: 'OK'
-                    });
+                    throw new Error(data.message || 'Failed to approve voter');
                 }
             })
             .catch(error => {
                 console.error('Error approving voter:', error);
                 Swal.fire({
                     title: 'Error!',
-                    text: 'An error occurred while approving the voter.',
+                    text: error.message || 'An error occurred while approving the voter.',
                     icon: 'error',
                     confirmButtonText: 'OK'
                 });
@@ -1498,6 +1514,7 @@ function verifyAndApproveVoter(voterId) {
         }
     });
 }
+
 function showElectionMonitoringModal(electionId) {
     fetch(`/api/election-details/${electionId}/`)
     .then(response => response.json())
