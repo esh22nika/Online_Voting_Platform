@@ -374,3 +374,15 @@ Admin 'admin' logged in.
 Login attempt for voter ID: TRY1234567
 OTP email sent successfully to eshanikaamballa@gmail.com
 OTP sent to 8369653702: 936297
+Login attempt for voter ID: TRY1234567
+OTP email sent successfully to eshanikaamballa@gmail.com
+OTP sent to 8369653702: 822149
+OTP verification error: duplicate key value violates unique constraint "voting_votersession_session_key_key"
+DETAIL:  Key (session_key)=(f0dg7c7ouon7ksx3b2oap2aykre2pmat) already exists.
+
+Login attempt for voter ID: ESH1234567
+OTP email sent successfully to eshanikaamballa@gmail.com
+OTP sent to 8369653702: 942127
+Login attempt for voter ID: TRY1234567
+OTP email sent successfully to eshanikaamballa@gmail.com
+OTP sent to 8369653702: 913650

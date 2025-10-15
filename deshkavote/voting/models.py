@@ -114,7 +114,7 @@ class Voter(models.Model):
     @property
     def is_fully_verified(self):
         return (self.aadhar_verified and self.pan_verified and
-                self.voter_id_verified and self.face_recognition_verified)
+                self.voter_id_verified)
 
     def get_eligible_elections(self):
         """Get elections this voter is eligible for based on location"""
