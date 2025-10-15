@@ -429,7 +429,8 @@ class VoterSession(models.Model):
     location_hash = models.CharField(max_length=64, blank=True)
 
 class OTPVerification(models.Model):
-    mobile = models.CharField(max_length=10)
+    email = models.EmailField(null=True, blank=True)  # ✅ NEW FIELD for email-based OTPs
+    mobile = models.CharField(max_length=10, null=True, blank=True)
     otp = models.CharField(max_length=6)
     created_at = models.DateTimeField(auto_now_add=True)
     verified = models.BooleanField(default=False)
@@ -437,9 +438,10 @@ class OTPVerification(models.Model):
 
     def is_valid(self):
         """Checks if OTP is still valid (not expired and within attempt limits)."""
-        is_expired = (timezone.now() - self.created_at) > timedelta(minutes=10) # OTP valid for 10 mins
+        from datetime import timedelta
+        is_expired = (timezone.now() - self.created_at) > timedelta(minutes=10)
         max_attempts_reached = self.attempts >= 3
         return not is_expired and not max_attempts_reached
 
     def __str__(self):
-        return f"OTP for {self.mobile} - Verified: {self.verified}"
+        return f"OTP for {self.email or self.mobile} - Verified: {self.verified}"

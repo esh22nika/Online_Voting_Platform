@@ -304,7 +304,7 @@ document.addEventListener('DOMContentLoaded', function() {
               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-              <p>An OTP has been sent to your registered mobile number ending with <strong>****${mobile.slice(-4)}</strong></p>
+              <p>An OTP has been sent to your registered email address</p>
               <div class="mb-3">
                 <label for="otpInput" class="form-label">Enter OTP</label>
                 <input type="text" class="form-control" id="otpInput" placeholder="Enter 6-digit OTP" maxlength="6" pattern="[0-9]{6}">

@@ -197,52 +197,52 @@ def auth_page(request):
     """Login/Register page view"""
     return render(request, 'auth.html')
 
+
 @csrf_exempt
 def register_voter(request):
     """Enhanced voter registration with security features"""
     if request.method == 'POST':
         try:
-            # CRITICAL DEBUG: Print everything we receive
+            # --- THE FIX: Get the password directly and reliably ---
+            password = request.POST.get('password')
+
+            # Your excellent debugging logs
             print("\n" + "="*50)
             print("REGISTRATION REQUEST RECEIVED")
             print("="*50)
             print(f"Content-Type: {request.content_type}")
             print(f"Method: {request.method}")
             print(f"\nPOST Data Keys: {list(request.POST.keys())}")
-            print(f"POST Data: {dict(request.POST)}")
+            # print(f"POST Data: {dict(request.POST)}") # Avoid printing password in logs
             print(f"\nFILES Keys: {list(request.FILES.keys())}")
+            print(f"\nPassword received: {'YES' if password else 'NO'}")
+            print(f"Password length: {len(password or '')}")
             print("="*50 + "\n")
-            
+
             with transaction.atomic():
-                # Handle FormData (files) instead of JSON
-                data = {
-                    'firstName': request.POST.get('firstName', '').strip(),
-                    'lastName': request.POST.get('lastName', '').strip(),
-                    'email': request.POST.get('email', '').strip(),
-                    'mobile': request.POST.get('mobile', '').strip(),
-                    'dob': request.POST.get('dob', '').strip(),
-                    'gender': request.POST.get('gender', '').strip(),
-                    'parentSpouseName': request.POST.get('parentSpouseName', '').strip(),
-                    'streetAddress': request.POST.get('streetAddress', '').strip(),
-                    'city': request.POST.get('city', '').strip(),
-                    'state': request.POST.get('state', '').strip(),
-                    'pincode': request.POST.get('pincode', '').strip(),
-                    'placeOfBirth': request.POST.get('placeOfBirth', '').strip(),
-                    'voterId': request.POST.get('voterId', '').strip(),
-                    'aadharNumber': request.POST.get('aadharNumber', '').strip(),
-                    'panNumber': request.POST.get('panNumber', '').strip(),
-                    'password': request.POST.get('password', ''),
-                }
+                # Now, handle the rest of the data
+                data = request.POST
+
+                # Validate password
+                if not password:
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'Password is required'
+                    })
                 
-                print("\nExtracted Data:")
-                for key, value in data.items():
-                    print(f"{key}: '{value}' (empty: {not value})")
+                if len(password) < 6:
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'Password must be at least 6 characters long'
+                    })
                 
+                print(f"\nPassword validation passed. Length: {len(password)}")
+
                 # Validate required fields
                 required_fields = ['firstName', 'lastName', 'email', 'mobile', 'dob', 
                                  'gender', 'parentSpouseName', 'streetAddress', 'city', 
                                  'state', 'pincode', 'placeOfBirth', 'voterId', 
-                                 'aadharNumber', 'panNumber', 'password']
+                                 'aadharNumber', 'panNumber']
                 
                 missing_fields = [field for field in required_fields if not data.get(field)]
                 
@@ -252,81 +252,72 @@ def register_voter(request):
                         'success': False,
                         'message': f'Missing required fields: {", ".join(missing_fields)}'
                     })
+
+                voter_id = data.get('voterId').strip()
                 
-                # Specifically check DOB
-                if not data['dob']:
-                    return JsonResponse({
-                        'success': False,
-                        'message': 'Date of birth is required.'
-                    })
-
-                aadhar_doc = request.FILES.get('aadhar_document')
-                pan_doc = request.FILES.get('pan_document')
-                voter_id_doc = request.FILES.get('voter_id_document')
-
                 # Enhanced validation
-                if Voter.objects.filter(voter_id=data['voterId']).exists():
-                    return JsonResponse({
-                        'success': False,
-                        'message': 'Voter ID already exists'
-                    })
+                if Voter.objects.filter(voter_id=voter_id).exists():
+                    return JsonResponse({'success': False, 'message': 'Voter ID already exists'})
 
-                if CustomUser.objects.filter(username=data['voterId']).exists():
-                    return JsonResponse({
-                        'success': False,
-                        'message': 'User already exists'
-                    })
+                if CustomUser.objects.filter(username=voter_id).exists():
+                    return JsonResponse({'success': False, 'message': 'User already exists'})
 
                 # Validate age (must be 18+)
                 try:
-                    dob = datetime.strptime(data['dob'], '%Y-%m-%d').date()
-                except ValueError as e:
-                    return JsonResponse({
-                        'success': False,
-                        'message': 'Invalid date format. Please use YYYY-MM-DD format.'
-                    })
+                    dob = datetime.strptime(data.get('dob'), '%Y-%m-%d').date()
+                except ValueError:
+                    return JsonResponse({'success': False, 'message': 'Invalid date format. Please use YYYY-MM-DD.'})
                 
                 today = timezone.now().date()
                 age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
 
                 if age < 18:
-                    return JsonResponse({
-                        'success': False,
-                        'message': 'You must be 18 years or older to register'
-                    })
+                    return JsonResponse({'success': False, 'message': 'You must be 18 years or older to register'})
 
-                # Create user
+                # CRITICAL: Create user with the reliably captured password
+                print(f"\nCreating user with username: {voter_id}")
                 user = CustomUser.objects.create_user(
-                    username=data['voterId'],
-                    password=data['password'],
+                    username=voter_id,
+                    password=password, # Use the password variable from the top
                     role='voter',
                     is_active=False,
-                    mobile=data['mobile']
+                    mobile=data.get('mobile').strip()
                 )
+                print(f"User created successfully. Password hash starts with: {user.password[:20]}...")
+
+                # Your password hash verification
+                from django.contrib.auth.hashers import check_password
+                password_check = check_password(password, user.password)
+                print(f"Immediate password hash verification after creation: {password_check}")
+                
+                if not password_check:
+                    print("❌ ERROR: Password was not hashed correctly! Rolling back transaction.")
+                    # By raising an exception, the transaction.atomic() block will automatically roll back.
+                    raise ValueError("Password hashing failed during user creation.")
 
                 # Create voter profile
                 voter = Voter.objects.create(
                     user=user,
-                    first_name=data['firstName'],
-                    last_name=data['lastName'],
-                    email=data['email'],
-                    mobile=data['mobile'],
+                    first_name=data.get('firstName').strip(),
+                    last_name=data.get('lastName').strip(),
+                    email=data.get('email').strip(),
+                    mobile=data.get('mobile').strip(),
                     date_of_birth=dob,
-                    gender=data['gender'],
-                    parent_spouse_name=data['parentSpouseName'],
-                    street_address=data['streetAddress'],
-                    city=data['city'],
-                    state=data['state'],
-                    pincode=data['pincode'],
-                    place_of_birth=data['placeOfBirth'],
-                    voter_id=data['voterId'],
-                    aadhar_number=data['aadharNumber'],
-                    pan_number=data['panNumber'],
-                    constituency=data.get('constituency', ''),
-                    district=data.get('district', ''),
-                    aadhar_document=aadhar_doc,
-                    pan_document=pan_doc,
-                    voter_id_document=voter_id_doc,
+                    gender=data.get('gender').strip(),
+                    parent_spouse_name=data.get('parentSpouseName').strip(),
+                    street_address=data.get('streetAddress').strip(),
+                    city=data.get('city').strip(),
+                    state=data.get('state').strip(),
+                    pincode=data.get('pincode').strip(),
+                    place_of_birth=data.get('placeOfBirth').strip(),
+                    voter_id=voter_id,
+                    aadhar_number=data.get('aadharNumber').strip(),
+                    pan_number=data.get('panNumber').strip(),
+                    constituency=data.get('constituency', '').strip(),
+                    district=data.get('district', '').strip(),
+                    aadhar_document=request.FILES.get('aadhar_document'),
+                    pan_document=request.FILES.get('pan_document'),
+                    voter_id_document=request.FILES.get('voter_id_document'),
                     approval_status='pending'
                 )
 
@@ -336,7 +327,7 @@ def register_voter(request):
                 create_audit_log(
                     'voter_registration',
                     user=user,
-                    details={'voter_id': data['voterId'], 'city': data['city'], 'state': data['state']},
+                    details={'voter_id': voter.voter_id, 'city': voter.city, 'state': voter.state},
                     request=request
                 )
                 
@@ -384,7 +375,12 @@ def login_user(request):
                            request.POST.get('voterId') or
                            request.POST.get('username'))
                 password = request.POST.get('password')
-
+            print(f"\n{'='*50}")
+            print(f"LOGIN ATTEMPT")
+            print(f"{'='*50}")
+            print(f"Voter ID: {voter_id}")
+            print(f"Password received: {'YES' if password else 'NO'}")
+            print(f"Password length: {len(password) if password else 0}")
             logger.info(f"Login attempt for voter ID: {voter_id}")
 
             if not voter_id or not password:
@@ -395,15 +391,21 @@ def login_user(request):
 
             try:
                 user = CustomUser.objects.get(username=voter_id)
-                
+                print(f"User found: {user.username}")
+                print(f"User is_active: {user.is_active}")
+                print(f"User role: {user.role}")
                 # Lockout mechanism
                 if user.is_locked and user.lock_time and timezone.now() < user.lock_time + timedelta(minutes=15):
                      return JsonResponse({
                         'success': False,
                         'message': 'Account is temporarily locked. Please try again later.'
                     })
+                
+                password_correct = user.check_password(password)
+                print(f"Password check result: {password_correct}")
 
                 if user.check_password(password) and user.role == 'voter':
+                    print("✅ Password is correct and user is voter")
                     user.failed_login_attempts = 0
                     user.is_locked = False
                     user.last_login_ip = request.META.get('REMOTE_ADDR')
@@ -411,6 +413,8 @@ def login_user(request):
 
                     try:
                         voter = Voter.objects.get(user=user)
+                        print(f"Voter found: {voter.voter_id}")
+                        print(f"Approval status: {voter.approval_status}")
                         # CHECK IF OTP IS REQUESTED
                         if data.get('request_otp'):
                             if voter.approval_status == 'pending':

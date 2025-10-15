@@ -230,4 +230,11 @@ SESSION_CACHE_ALIAS = 'default'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-FAST2SMS_API_KEY = '8PMbgytRDHwq9x1C3J0zesV7dFXGOEUokBfTmcjArLIlYhiZSN4ygmouWkAUZcGLtpfvjdrNz0TP9MDS'  # Get from Fast2SMS dashboard
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'deshkavote.otp@gmail.com'     # your Gmail or SMTP sender
+EMAIL_HOST_PASSWORD = 'vdnumuaphwamorye'   # app password (not Gmail password)
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+  # Get from Fast2SMS dashboard
