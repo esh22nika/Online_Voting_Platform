@@ -2149,3 +2149,256 @@ def verify_and_approve_voter(request):
             return JsonResponse({'success': False, 'message': f'Error: {str(e)}'})
     
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
+
+# Add these two new views to voting/views.py
+
+@require_GET
+@login_required
+def get_voter_count_preview(request):
+    """Get count of voters for preview before download"""
+    if not (request.user.is_staff or request.user.role == 'admin'):
+        return JsonResponse({'success': False, 'message': 'Unauthorized'})
+    
+    election_id = request.GET.get('election_id')
+    include_approved = request.GET.get('approved', 'false') == 'true'
+    include_pending = request.GET.get('pending', 'false') == 'true'
+    include_rejected = request.GET.get('rejected', 'false') == 'true'
+    
+    try:
+        election = Election.objects.get(id=election_id)
+        
+        # Build approval status filter
+        approval_statuses = []
+        if include_approved:
+            approval_statuses.append('approved')
+        if include_pending:
+            approval_statuses.append('pending')
+        if include_rejected:
+            approval_statuses.append('rejected')
+        
+        # Filter voters based on election location
+        voters_query = Voter.objects.filter(state=election.state)
+        
+        # Further filter by city if it's a Municipal election
+        if election.election_type == 'Municipal' and election.city:
+            voters_query = voters_query.filter(city=election.city)
+        
+        # Further filter by district if it's a Panchayat election
+        if election.election_type == 'Panchayat' and election.district:
+            voters_query = voters_query.filter(district=election.district)
+        
+        # Apply approval status filter
+        if approval_statuses:
+            voters_query = voters_query.filter(approval_status__in=approval_statuses)
+        
+        count = voters_query.count()
+        
+        return JsonResponse({
+            'success': True,
+            'count': count,
+            'election_name': election.name,
+            'state': election.state
+        })
+        
+    except Election.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Election not found'})
+    except Exception as e:
+        logger.error(f"Error getting voter count preview: {e}")
+        return JsonResponse({'success': False, 'message': str(e)})
+
+
+@require_GET
+@login_required
+def download_voters_list(request):
+    """Download filtered voters list based on election location"""
+    if not (request.user.is_staff or request.user.role == 'admin'):
+        return JsonResponse({'success': False, 'message': 'Unauthorized'})
+    
+    election_id = request.GET.get('election_id')
+    file_format = request.GET.get('format', 'csv')
+    include_approved = request.GET.get('approved', 'false') == 'true'
+    include_pending = request.GET.get('pending', 'false') == 'true'
+    include_rejected = request.GET.get('rejected', 'false') == 'true'
+    
+    try:
+        election = Election.objects.get(id=election_id)
+        
+        # Build approval status filter
+        approval_statuses = []
+        if include_approved:
+            approval_statuses.append('approved')
+        if include_pending:
+            approval_statuses.append('pending')
+        if include_rejected:
+            approval_statuses.append('rejected')
+        
+        # Filter voters based on election location
+        voters_query = Voter.objects.filter(state=election.state)
+        
+        # Further filter by city if it's a Municipal election
+        if election.election_type == 'Municipal' and election.city:
+            voters_query = voters_query.filter(city=election.city)
+        
+        # Further filter by district if it's a Panchayat election
+        if election.election_type == 'Panchayat' and election.district:
+            voters_query = voters_query.filter(district=election.district)
+        
+        # Apply approval status filter
+        if approval_statuses:
+            voters_query = voters_query.filter(approval_status__in=approval_statuses)
+        else:
+            # If no status selected, return empty list
+            voters_query = Voter.objects.none()
+        
+        # Order by name for better readability
+        voters = voters_query.order_by('first_name', 'last_name')
+        
+        # Generate filename
+        filename_base = f"voters_{election.state}_{election.name.replace(' ', '_')}"
+        
+        if file_format == 'excel':
+            # Excel export
+            try:
+                import openpyxl
+                from openpyxl.styles import Font, PatternFill, Alignment
+                from openpyxl.utils import get_column_letter
+                
+                # Create workbook
+                wb = openpyxl.Workbook()
+                ws = wb.active
+                ws.title = "Voters List"
+                
+                # Add header with election info
+                ws.merge_cells('A1:G1')
+                ws['A1'] = f"Voters List for {election.name}"
+                ws['A1'].font = Font(size=14, bold=True)
+                ws['A1'].alignment = Alignment(horizontal='center')
+                
+                ws.merge_cells('A2:G2')
+                ws['A2'] = f"State: {election.state} | Type: {election.election_type} | Date: {timezone.now().strftime('%Y-%m-%d')}"
+                ws['A2'].alignment = Alignment(horizontal='center')
+                
+                # Column headers
+                headers = ['Voter ID', 'Full Name', 'Email', 'Mobile', 'City', 'Pincode', 'Approval Status']
+                header_row = 4
+                
+                for col_num, header in enumerate(headers, 1):
+                    cell = ws.cell(row=header_row, column=col_num)
+                    cell.value = header
+                    cell.font = Font(bold=True)
+                    cell.fill = PatternFill(start_color="138808", end_color="138808", fill_type="solid")
+                    cell.alignment = Alignment(horizontal='center')
+                
+                # Add data
+                for row_num, voter in enumerate(voters, header_row + 1):
+                    ws.cell(row=row_num, column=1).value = voter.voter_id
+                    ws.cell(row=row_num, column=2).value = voter.full_name
+                    ws.cell(row=row_num, column=3).value = voter.email
+                    ws.cell(row=row_num, column=4).value = voter.mobile
+                    ws.cell(row=row_num, column=5).value = voter.city
+                    ws.cell(row=row_num, column=6).value = voter.pincode
+                    ws.cell(row=row_num, column=7).value = voter.approval_status.upper()
+                
+                # Auto-adjust column widths
+                for col in range(1, 8):
+                    column_letter = get_column_letter(col)
+                    max_length = 0
+                    for cell in ws[column_letter]:
+                        try:
+                            if len(str(cell.value)) > max_length:
+                                max_length = len(str(cell.value))
+                        except:
+                            pass
+                    adjusted_width = min(max_length + 2, 50)
+                    ws.column_dimensions[column_letter].width = adjusted_width
+                
+                # Add summary at bottom
+                summary_row = len(voters) + header_row + 2
+                ws.merge_cells(f'A{summary_row}:G{summary_row}')
+                ws[f'A{summary_row}'] = f"Total Voters: {voters.count()}"
+                ws[f'A{summary_row}'].font = Font(bold=True)
+                ws[f'A{summary_row}'].alignment = Alignment(horizontal='center')
+                
+                # Create response
+                response = HttpResponse(
+                    content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                )
+                response['Content-Disposition'] = f'attachment; filename="{filename_base}.xlsx"'
+                
+                wb.save(response)
+                
+                # Log the download
+                create_audit_log(
+                    'admin_action',
+                    user=request.user,
+                    election=election,
+                    details={
+                        'action': 'download_voters_list',
+                        'election_name': election.name,
+                        'state': election.state,
+                        'format': 'excel',
+                        'voter_count': voters.count()
+                    },
+                    request=request
+                )
+                
+                return response
+                
+            except ImportError:
+                # Fall back to CSV if openpyxl not available
+                logger.warning("openpyxl not installed, falling back to CSV")
+                file_format = 'csv'
+        
+        if file_format == 'csv':
+            # CSV export
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = f'attachment; filename="{filename_base}.csv"'
+            
+            writer = csv.writer(response)
+            
+            # Write header with election info
+            writer.writerow([f"Voters List for {election.name}"])
+            writer.writerow([f"State: {election.state} | Type: {election.election_type} | Generated: {timezone.now().strftime('%Y-%m-%d %H:%M')}"])
+            writer.writerow([])  # Empty row
+            
+            # Write column headers
+            writer.writerow(['Voter ID', 'Full Name', 'Email', 'Mobile', 'City', 'Pincode', 'Approval Status'])
+            
+            # Write voter data
+            for voter in voters:
+                writer.writerow([
+                    voter.voter_id,
+                    voter.full_name,
+                    voter.email,
+                    voter.mobile,
+                    voter.city,
+                    voter.pincode,
+                    voter.approval_status.upper()
+                ])
+            
+            # Write summary
+            writer.writerow([])  # Empty row
+            writer.writerow([f"Total Voters: {voters.count()}"])
+            
+            # Log the download
+            create_audit_log(
+                'admin_action',
+                user=request.user,
+                election=election,
+                details={
+                    'action': 'download_voters_list',
+                    'election_name': election.name,
+                    'state': election.state,
+                    'format': 'csv',
+                    'voter_count': voters.count()
+                },
+                request=request
+            )
+            
+            return response
+        
+    except Election.DoesNotExist:
+        return HttpResponse("Election not found", status=404)
+    except Exception as e:
+        logger.error(f"Error downloading voters list: {e}")
+        return HttpResponse(f"Error: {str(e)}", status=500)

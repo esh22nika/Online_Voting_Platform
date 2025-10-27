@@ -1199,74 +1199,106 @@ function updateCandidateVerificationStatus(candidateId, isVerified) {
     }
 }
 
-
-// Voter list download functionality
-function showVotersListModal(electionId) {
-    const modalHtml = `
-        <div class="modal fade" id="votersListModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Download Voters List</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="votersListElection" class="form-label">Election</label>
-                            <select class="form-select" id="votersListElection" disabled>
-                                <option value="${electionId}" selected>Current Election</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="votersListState" class="form-label">State (Optional)</label>
-                            <input type="text" class="form-control" id="votersListState" placeholder="Filter by state">
-                        </div>
-                        <div class="mb-3">
-                            <label for="votersListCity" class="form-label">City (Optional)</label>
-                            <input type="text" class="form-control" id="votersListCity" placeholder="Filter by city">
-                        </div>
-                        <div class="mb-3">
-                            <label for="votersListDistrict" class="form-label">District (Optional)</label>
-                            <input type="text" class="form-control" id="votersListDistrict" placeholder="Filter by district">
-                        </div>
-                        <div class="mb-3">
-                            <label for="votersListFormat" class="form-label">Format</label>
-                            <select class="form-select" id="votersListFormat">
-                                <option value="csv">CSV</option>
-                                <option value="excel">Excel</option>
-                                <option value="pdf">PDF</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" onclick="downloadVotersListByRegion()">
-                            <i class="fa fa-download"></i> Download
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Remove existing modal if any
-    const existingModal = document.getElementById('votersListModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    
-    // Add modal to body and show
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    document.getElementById('votersListElection').value = electionId;
-    
-    const modal = new bootstrap.Modal(document.getElementById('votersListModal'));
+// Update the showVotersListModal function in admin.js
+function showVotersListModal() {
+    const modal = new bootstrap.Modal(document.getElementById('downloadVotersModal'));
     modal.show();
     
-    // Remove modal from DOM when hidden
-    document.getElementById('votersListModal').addEventListener('hidden.bs.modal', function() {
-        this.remove();
-    });
+    // Reset form
+    document.getElementById('downloadVotersForm').reset();
+    document.getElementById('electionInfo').classList.add('d-none');
+    document.getElementById('voterCountPreview').classList.add('d-none');
+    document.getElementById('includeApproved').checked = true;
 }
+
+// Handle election selection change
+document.getElementById('downloadElection').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    
+    if (this.value) {
+        const state = selectedOption.dataset.state;
+        const city = selectedOption.dataset.city;
+        const type = selectedOption.dataset.type;
+        
+        // Show election info
+        const infoDiv = document.getElementById('electionInfo');
+        const infoContent = document.getElementById('electionInfoContent');
+        
+        let locationText = `<strong>State:</strong> ${state}`;
+        if (city) {
+            locationText += `<br><strong>City:</strong> ${city}`;
+        }
+        locationText += `<br><strong>Type:</strong> ${type}`;
+        
+        infoContent.innerHTML = locationText;
+        infoDiv.classList.remove('d-none');
+        
+        // Fetch voter count preview
+        fetchVoterCount();
+    } else {
+        document.getElementById('electionInfo').classList.add('d-none');
+        document.getElementById('voterCountPreview').classList.add('d-none');
+    }
+});
+
+// Update voter count when approval status checkboxes change
+document.querySelectorAll('#includeApproved, #includePending, #includeRejected').forEach(checkbox => {
+    checkbox.addEventListener('change', fetchVoterCount);
+});
+
+function fetchVoterCount() {
+    const electionId = document.getElementById('downloadElection').value;
+    if (!electionId) return;
+    
+    const includeApproved = document.getElementById('includeApproved').checked;
+    const includePending = document.getElementById('includePending').checked;
+    const includeRejected = document.getElementById('includeRejected').checked;
+    
+    fetch(`/api/voter-count-preview/?election_id=${electionId}&approved=${includeApproved}&pending=${includePending}&rejected=${includeRejected}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const previewDiv = document.getElementById('voterCountPreview');
+                const countText = document.getElementById('voterCountText');
+                countText.textContent = `${data.count} ${data.count === 1 ? 'voter' : 'voters'}`;
+                previewDiv.classList.remove('d-none');
+            }
+        })
+        .catch(error => console.error('Error fetching voter count:', error));
+}
+
+// Handle form submission
+document.getElementById('downloadVotersForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const electionId = document.getElementById('downloadElection').value;
+    const format = document.getElementById('downloadFormat').value;
+    const includeApproved = document.getElementById('includeApproved').checked;
+    const includePending = document.getElementById('includePending').checked;
+    const includeRejected = document.getElementById('includeRejected').checked;
+    
+    if (!electionId) {
+        alert('Please select an election');
+        return;
+    }
+    
+    // Build URL with parameters
+    const params = new URLSearchParams({
+        election_id: electionId,
+        format: format,
+        approved: includeApproved,
+        pending: includePending,
+        rejected: includeRejected
+    });
+    
+    // Trigger download
+    window.location.href = `/api/download-voters-list/?${params.toString()}`;
+    
+    // Close modal after a short delay
+    setTimeout(() => {
+        bootstrap.Modal.getInstance(document.getElementById('downloadVotersModal')).hide();
+    }, 500);
+});
 
 
 function downloadVotersListByRegion() {

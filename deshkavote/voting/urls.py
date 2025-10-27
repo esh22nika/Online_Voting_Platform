@@ -30,6 +30,7 @@ urlpatterns = [
     path('api/reconsider-voter/', views.reconsider_voter, name='reconsider_voter'),
     path('api/voter-details/<int:voter_id>/', views.get_voter_details, name='get_voter_details'),
     path('api/download-voters-list/', views.download_voters_list, name='download_voters_list'),
+    path('api/voter-count-preview/', views.get_voter_count_preview, name='voter_count_preview'),
     
 
     # Election management APIs
