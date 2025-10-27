@@ -386,3 +386,60 @@ OTP sent to 8369653702: 942127
 Login attempt for voter ID: TRY1234567
 OTP email sent successfully to eshanikaamballa@gmail.com
 OTP sent to 8369653702: 913650
+Admin 'admin' logged in.
+Login attempt for voter ID: AKS1234567
+OTP email sent successfully to akshaj123@gmail.com
+OTP sent to 9029745425: 880506
+Vote casting attempt by AKS1234567: {'election_id': '4be164ad-b907-4d09-acbf-7d6271675342', 'candidate_id': '357257b4-02ff-4d41-bdb6-5de3dbfee222'}
+Vote created: 41f1085e-3bee-405d-aa40-3e946bd30fee
+Vote casting attempt by AKS1234567: {'election_id': 'f2085c1f-d28a-474b-8f63-739a99aca0e6', 'candidate_id': 'd0ef8e08-630c-451d-9bb3-3258c8191e7c'}
+Vote created: b943171f-f6b1-4835-a186-4a455721f1ea
+Admin 'admin' logged in.
+Admin 'admin' logged in.
+Admin 'admin' logged in.
+Admin 'admin' logged in.
+Error in vote consensus processing: You cannot use AsyncToSync in the same thread as an async event loop - just await the async function directly.
+Admin 'admin' logged in.
+Login attempt for voter ID: QWE1234567
+OTP email sent successfully to snehag1795@gmail.com
+OTP sent to 7499160389: 813815
+Vote casting attempt by QWE1234567: {'election_id': '4be164ad-b907-4d09-acbf-7d6271675342', 'candidate_id': '357257b4-02ff-4d41-bdb6-5de3dbfee222'}
+Vote created: e5ae3bc5-85ec-4054-806d-983eefc5ada8
+Vote casting attempt by QWE1234567: {'election_id': 'f2085c1f-d28a-474b-8f63-739a99aca0e6', 'candidate_id': 'd0ef8e08-630c-451d-9bb3-3258c8191e7c'}
+Vote created: a98f6655-1024-4f0d-a90c-4c71756c660f
+Login attempt for voter ID: QWE1234567
+OTP email sent successfully to snehag1795@gmail.com
+OTP sent to 7499160389: 242507
+Login attempt for voter ID: QWE1234567
+OTP email sent successfully to snehag1795@gmail.com
+OTP sent to 7499160389: 649681
+OTP verification error: duplicate key value violates unique constraint "voting_votersession_session_key_key"
+DETAIL:  Key (session_key)=(s7ulv799xdqgt7xx06uy8thklidaoqk8) already exists.
+
+Admin 'admin' logged in.
+Login attempt for voter ID: ESH1234567
+OTP email sent successfully to eshanikaamballa@gmail.com
+OTP sent to 8369653702: 711084
+Admin 'admin' logged in.
+Login attempt for voter ID: IOP1234567
+Invalid credentials for voter: IOP1234567
+Login attempt for voter ID: IOP1234567
+OTP email sent successfully to snehag1795@gmail.com
+OTP sent to 7499160389: 664265
+Admin 'admin' logged in.
+Login attempt for voter ID: PQR1234567
+OTP email sent successfully to eshanikaamballa@gmail.com
+OTP sent to 8369653702: 935478
+Login attempt for voter ID: ESH1234567
+OTP email sent successfully to eshanikaamballa@gmail.com
+OTP sent to 8369653702: 279324
+Login attempt for voter ID: QWE1234567
+OTP email sent successfully to snehag1795@gmail.com
+OTP sent to 7499160389: 646147
+Vote casting attempt by QWE1234567: {'election_id': 'e0ae7e1a-24a3-4e74-b171-6d7f8dfeb528', 'candidate_id': 'db66ccde-dbfd-44ac-a966-8a5efe0a96e4'}
+Vote created: 54717d1c-97ee-4733-8405-a43d22453751
+Login attempt for voter ID: ESH1234567
+OTP email sent successfully to eshanikaamballa@gmail.com
+OTP sent to 8369653702: 283508
+Admin 'admin' logged in.
+Admin 'admin' logged in.
