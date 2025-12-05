@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
 from pathlib import Path
-
+import sys
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -238,3 +238,12 @@ EMAIL_HOST_USER = 'deshkavote.otp@gmail.com'     # your Gmail or SMTP sender
 EMAIL_HOST_PASSWORD = 'vdnumuaphwamorye'   # app password (not Gmail password)
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
   # Get from Fast2SMS dashboard
+
+if 'test' in sys.argv:
+    MIGRATION_MODULES = {
+        'voting': None,
+    }
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': ':memory:',
+    }
