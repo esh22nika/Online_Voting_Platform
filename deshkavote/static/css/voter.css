@@ -194,3 +194,669 @@
         justify-content: center !important;
     }
 }
+/* static/css/accessibility.css */
+/* WCAG 2.1 AAA Compliant Accessibility Styles */
+
+/* ========================================
+   ROOT VARIABLES
+   ======================================== */
+:root {
+    --primary-green: #138808;
+    --primary-orange: #f58220;
+    --text-primary: #0f3e7a;
+    --bg-light: #f7f1e1;
+    --border-dark: #000000;
+    --white: #ffffff;
+    --success: #28a745;
+    --warning: #ffc107;
+    --danger: #dc3545;
+    
+    /* Font sizes for accessibility */
+    --font-size-small: 14px;
+    --font-size-medium: 16px;
+    --font-size-large: 20px;
+    
+    /* Spacing */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+}
+
+/* ========================================
+   FONT SIZE CLASSES
+   ======================================== */
+body.font-small {
+    font-size: var(--font-size-small) !important;
+}
+
+body.font-medium {
+    font-size: var(--font-size-medium) !important;
+}
+
+body.font-large {
+    font-size: var(--font-size-large) !important;
+}
+
+body.font-large h1 { font-size: 2.5rem !important; }
+body.font-large h2 { font-size: 2rem !important; }
+body.font-large h3 { font-size: 1.75rem !important; }
+body.font-large h4 { font-size: 1.5rem !important; }
+body.font-large h5 { font-size: 1.25rem !important; }
+body.font-large .btn { 
+    padding: 1rem 1.5rem !important; 
+    font-size: 1.25rem !important; 
+}
+
+/* ========================================
+   HIGH CONTRAST MODE
+   ======================================== */
+body.high-contrast {
+    background: #000000 !important;
+    color: #ffffff !important;
+}
+
+body.high-contrast .card,
+body.high-contrast .border,
+body.high-contrast section,
+body.high-contrast .modal-content {
+    background: #1a1a1a !important;
+    border-color: #ffffff !important;
+    color: #ffffff !important;
+}
+
+body.high-contrast .btn-primary,
+body.high-contrast .bg-primary {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 2px solid #ffffff !important;
+}
+
+body.high-contrast .btn-secondary,
+body.high-contrast .bg-secondary {
+    background: #cccccc !important;
+    color: #000000 !important;
+    border: 2px solid #ffffff !important;
+}
+
+body.high-contrast .btn-success,
+body.high-contrast .bg-success {
+    background: #00ff00 !important;
+    color: #000000 !important;
+    border: 2px solid #ffffff !important;
+}
+
+body.high-contrast .text-muted {
+    color: #cccccc !important;
+}
+
+body.high-contrast .navbar-light {
+    background: #1a1a1a !important;
+    border-color: #ffffff !important;
+}
+
+body.high-contrast .nav-link {
+    color: #ffffff !important;
+}
+
+body.high-contrast input,
+body.high-contrast select,
+body.high-contrast textarea {
+    background: #1a1a1a !important;
+    color: #ffffff !important;
+    border: 2px solid #ffffff !important;
+}
+
+/* ========================================
+   FOCUS INDICATORS - WCAG 2.4.7
+   ======================================== */
+*:focus {
+    outline: 3px solid var(--primary-orange) !important;
+    outline-offset: 2px !important;
+}
+
+button:focus,
+a:focus,
+input:focus,
+select:focus,
+textarea:focus,
+.btn:focus {
+    outline: 3px solid var(--primary-orange) !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 4px rgba(245, 130, 32, 0.2) !important;
+}
+
+/* ========================================
+   SKIP TO MAIN CONTENT - WCAG 2.4.1
+   ======================================== */
+.skip-to-main {
+    position: absolute;
+    left: -9999px;
+    z-index: 9999;
+    padding: 1rem 2rem;
+    background: var(--primary-green);
+    color: var(--white);
+    text-decoration: none;
+    font-weight: bold;
+    border: 2px solid var(--white);
+    border-radius: 4px;
+}
+
+.skip-to-main:focus {
+    left: 10px;
+    top: 10px;
+}
+
+/* ========================================
+   SCREEN READER ONLY - WCAG 4.1.3
+   ======================================== */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.sr-only-focusable:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+}
+
+/* ========================================
+   MINIMUM TOUCH TARGET SIZE - WCAG 2.5.5
+   ======================================== */
+.btn,
+button,
+a.btn,
+input[type="button"],
+input[type="submit"],
+.icon-btn {
+    min-width: 44px;
+    min-height: 44px;
+}
+
+/* ========================================
+   ENHANCED BUTTONS
+   ======================================== */
+.btn {
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    border: 2px solid transparent;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0.5rem;
+    border: 2px solid var(--primary-green);
+    border-radius: 0.25rem;
+    background: var(--white);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+    background: var(--bg-light);
+    transform: scale(1.05);
+}
+
+.icon-btn svg,
+.icon-btn i {
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
+}
+
+/* ========================================
+   ENHANCED FORM CONTROLS
+   ======================================== */
+input,
+select,
+textarea {
+    min-height: 44px;
+    padding: 0.75rem;
+    border: 2px solid var(--border-dark);
+    border-radius: 0.25rem;
+    font-size: inherit;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--primary-green);
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Required field indicator */
+label.required::after {
+    content: " *";
+    color: var(--danger);
+}
+
+/* ========================================
+   ERROR AND SUCCESS STATES
+   ======================================== */
+.form-control.error {
+    border-color: var(--danger);
+    border-width: 3px;
+}
+
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: #f8d7da;
+    border: 2px solid var(--danger);
+    border-radius: 0.25rem;
+    color: #721c24;
+    font-weight: 600;
+}
+
+.form-control.success {
+    border-color: var(--success);
+    border-width: 2px;
+}
+
+.success-message {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: #d4edda;
+    border: 2px solid var(--success);
+    border-radius: 0.25rem;
+    color: #155724;
+    font-weight: 600;
+}
+
+/* ========================================
+   ACCESSIBILITY TOOLBAR
+   ======================================== */
+.accessibility-toolbar {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 1000;
+    background: var(--white);
+    border: 2px solid var(--border-dark);
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* ========================================
+   SETTINGS MODAL
+   ======================================== */
+.settings-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.settings-content {
+    background: var(--white);
+    border: 3px solid var(--border-dark);
+    border-radius: 0.5rem;
+    padding: 2rem;
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.settings-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--bg-light);
+}
+
+.settings-row:last-child {
+    border-bottom: none;
+}
+
+/* ========================================
+   TOGGLE SWITCH
+   ======================================== */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    border: 2px solid var(--border-dark);
+    transition: 0.3s;
+    border-radius: 34px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    border: 2px solid var(--border-dark);
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: var(--primary-green);
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(26px);
+}
+
+input:focus + .toggle-slider {
+    box-shadow: 0 0 0 4px rgba(19, 136, 8, 0.2);
+}
+
+/* ========================================
+   LANGUAGE SELECTOR
+   ======================================== */
+.language-selector {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.language-btn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0.5rem 1rem;
+    border: 2px solid var(--border-dark);
+    border-radius: 0.25rem;
+    background: var(--white);
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.language-btn:hover {
+    background: var(--bg-light);
+}
+
+.language-btn.active {
+    background: var(--primary-green);
+    color: var(--white);
+    border-color: var(--primary-green);
+}
+
+/* ========================================
+   KEYBOARD NAVIGATION INDICATORS
+   ======================================== */
+[tabindex]:focus,
+[role="button"]:focus {
+    outline: 3px solid var(--primary-orange);
+    outline-offset: 2px;
+}
+
+/* ========================================
+   STATUS BADGES WITH BETTER CONTRAST
+   ======================================== */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem 1rem;
+    border-radius: 1rem;
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.badge-success,
+.bg-success .badge {
+    background: var(--success) !important;
+    color: var(--white) !important;
+}
+
+.badge-warning,
+.bg-warning .badge {
+    background: #cc9a00 !important;
+    color: var(--white) !important;
+}
+
+.badge-danger,
+.bg-danger .badge {
+    background: var(--danger) !important;
+    color: var(--white) !important;
+}
+
+/* ========================================
+   LOADING STATES
+   ======================================== */
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2rem;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--bg-light);
+    border-top-color: var(--primary-green);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ========================================
+   ANNOUNCEMENTS FOR SCREEN READERS
+   ======================================== */
+[role="alert"],
+[role="status"] {
+    padding: 1rem;
+    margin: 1rem 0;
+    border: 2px solid;
+    border-radius: 0.25rem;
+}
+
+[role="alert"] {
+    background: #f8d7da;
+    border-color: var(--danger);
+    color: #721c24;
+}
+
+[role="status"] {
+    background: #d4edda;
+    border-color: var(--success);
+    color: #155724;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN - WCAG 1.4.10
+   ======================================== */
+@media (max-width: 768px) {
+    :root {
+        --font-size-small: 16px;
+        --font-size-medium: 18px;
+        --font-size-large: 22px;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .settings-content {
+        width: 95%;
+        padding: 1rem;
+    }
+    
+    .accessibility-toolbar {
+        top: 60px;
+        right: 10px;
+    }
+}
+
+/* ========================================
+   PRINT STYLES - WCAG 1.4.13
+   ======================================== */
+@media print {
+    .no-print,
+    .btn,
+    .settings-modal,
+    .accessibility-toolbar,
+    header nav {
+        display: none !important;
+    }
+
+    body {
+        background: white;
+        color: black;
+        font-size: 12pt;
+    }
+
+    a {
+        text-decoration: underline;
+        color: blue;
+    }
+
+    a[href]:after {
+        content: " (" attr(href) ")";
+    }
+}
+
+/* ========================================
+   REDUCED MOTION - WCAG 2.3.3
+   ======================================== */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* ========================================
+   ELECTION CARDS
+   ======================================== */
+.election-container {
+    transition: all 0.2s ease;
+}
+
+.election-container:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary-green) !important;
+}
+
+/* ========================================
+   VOTED CONTAINER
+   ======================================== */
+.voted-container {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    padding: 10px;
+    border-radius: 8px;
+    border: 2px solid var(--success);
+}
+
+/* ========================================
+   IMPROVED TABLE ACCESSIBILITY
+   ======================================== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 1rem;
+    text-align: left;
+    border: 2px solid var(--border-dark);
+}
+
+th {
+    background: var(--bg-light);
+    font-weight: 700;
+}
+
+/* ========================================
+   CARD IMPROVEMENTS
+   ======================================== */
+.card {
+    border: 2px solid var(--border-dark);
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.card:focus-within {
+    outline: 3px solid var(--primary-orange);
+    outline-offset: 2px;
+}
