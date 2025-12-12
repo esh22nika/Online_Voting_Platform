@@ -668,6 +668,7 @@ Login attempt for voter ID: E2E4000006
 Login attempt for voter ID: E2E4000007
 Login attempt for voter ID: E2E4000008
 Login attempt for voter ID: E2E4000009
+<<<<<<< HEAD
 Login attempt for voter ID: AKS1234567
 OTP email sent successfully to akshaj123@gmail.com
 OTP sent to 9029745425: 407447
@@ -693,3 +694,23 @@ Vote created: 0077903c-60bf-4ecf-95f1-8d239d109103
 Login attempt for voter ID: ASD1234567
 OTP email sent successfully to snehag1795@gmail.com
 OTP sent to 9876987698: 873413
+=======
+Login attempt for voter ID: ESH1234567
+Invalid credentials for voter: ESH1234567
+Login attempt for voter ID: ESH1234567
+OTP email sent successfully to eshanikaamballa@gmail.com
+OTP sent to 8369653702: 983883
+Login attempt for voter ID: ESH1234567
+Invalid credentials for voter: ESH1234567
+Login attempt for voter ID: ESH1234567
+Invalid credentials for voter: ESH1234567
+Login attempt for voter ID: ESH1234567
+OTP email sent successfully to eshanikaamballa@gmail.com
+OTP sent to 8369653702: 775185
+Admin 'admin' logged in.
+Login attempt for voter ID: ESH1234567
+OTP email sent successfully to eshanikaamballa@gmail.com
+OTP sent to 8369653702: 361784
+Vote casting attempt by ESH1234567: {'election_id': 'abba9884-39ac-4691-9b75-1d7b6247214c', 'candidate_id': '64025cf4-74aa-486d-b50e-47f09a39d49e'}
+Vote created: c1a1132d-4a67-4fae-8b05-96a51c657182
+>>>>>>> ab65855b52e06e7491bda7cb1037c074ce99a218

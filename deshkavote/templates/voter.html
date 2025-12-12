@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<<<<<<< HEAD
     <title>Voter Dashboard - DeshKaVote</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -27,11 +28,29 @@
         .table th, .table td { border-color: var(--primary-orange) !important; }
 
         /* Accessibility Toolbar */
+=======
+    <title>{% block title %}Voter Dashboard - DeshKaVote{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/voter.css' %}">
+    <link rel="stylesheet" href="{% static 'css/accessibility.css' %}">
+    
+    <style>
+        /* Additional inline styles for accessibility */
+>>>>>>> ab65855b52e06e7491bda7cb1037c074ce99a218
         .accessibility-toolbar {
             position: fixed;
             top: 80px;
             right: 20px;
             z-index: 1000;
+<<<<<<< HEAD
             background: var(--white);
             border: 2px solid var(--primary-orange);
             border-radius: 8px;
@@ -44,6 +63,20 @@
             height: 48px;
             border: 2px solid var(--primary-orange);
             background: var(--white);
+=======
+            background: white;
+            border: 2px solid #000;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .icon-btn {
+            width: 44px;
+            height: 44px;
+            border: 2px solid #138808;
+            background: white;
+>>>>>>> ab65855b52e06e7491bda7cb1037c074ce99a218
             border-radius: 4px;
             cursor: pointer;
             display: flex;
@@ -51,6 +84,7 @@
             justify-content: center;
             margin-bottom: 8px;
             transition: all 0.2s;
+<<<<<<< HEAD
             color: var(--primary-green);
         }
         
@@ -89,6 +123,21 @@
         }
 
         /* Screen Reader */
+=======
+        }
+        
+        .icon-btn:hover {
+            background: #f7f1e1;
+            transform: scale(1.05);
+        }
+        
+        .icon-btn:focus {
+            outline: 3px solid #f58220;
+            outline-offset: 2px;
+        }
+        
+        /* Screen reader only */
+>>>>>>> ab65855b52e06e7491bda7cb1037c074ce99a218
         .sr-only {
             position: absolute;
             width: 1px;
@@ -96,10 +145,18 @@
             padding: 0;
             margin: -1px;
             overflow: hidden;
+<<<<<<< HEAD
             clip: rect(0, 0, 0, 0);
             white-space: nowrap;
             border: 0;
         }
+=======
+            clip: rect(0,0,0,0);
+            white-space: nowrap;
+            border: 0;
+        }
+        
+>>>>>>> ab65855b52e06e7491bda7cb1037c074ce99a218
         .sr-only-focusable:focus {
             position: static;
             width: auto;
@@ -108,6 +165,7 @@
             clip: auto;
             white-space: normal;
         }
+<<<<<<< HEAD
 
         /* Skip Link */
         .skip-to-main {
@@ -225,10 +283,13 @@
 
         input:checked + .toggle-slider { background-color: var(--primary-green); }
         input:checked + .toggle-slider:before { transform: translateX(26px); }
+=======
+>>>>>>> ab65855b52e06e7491bda7cb1037c074ce99a218
     </style>
 </head>
 <body class="voter-page font-medium" data-language="en">
     
+<<<<<<< HEAD
     <a href="#main-content" class="skip-to-main">Skip to main content</a>
     
     <!-- Accessibility Toolbar -->
@@ -238,10 +299,31 @@
         </button>
         
         <button id="accessibility-settings-btn" class="icon-btn" aria-label="Open accessibility settings" title="Accessibility Settings">
+=======
+    <!-- Skip to main content link -->
+    <a href="#main-content" class="skip-to-main sr-only sr-only-focusable">
+        Skip to main content
+    </a>
+    
+    <!-- Accessibility Toolbar -->
+    <div class="accessibility-toolbar" role="toolbar" aria-label="Accessibility tools">
+        <button id="audio-instructions-btn" 
+                class="icon-btn" 
+                aria-label="Play audio instructions"
+                title="Audio Instructions">
+            <i class="fas fa-volume-up" aria-hidden="true"></i>
+        </button>
+        
+        <button id="accessibility-settings-btn" 
+                class="icon-btn" 
+                aria-label="Open accessibility settings"
+                title="Accessibility Settings">
+>>>>>>> ab65855b52e06e7491bda7cb1037c074ce99a218
             <i class="fas fa-cog" aria-hidden="true"></i>
         </button>
     </div>
     
+<<<<<<< HEAD
     <div id="aria-live-region" role="status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
 
     <!-- Settings Modal -->
@@ -300,12 +382,31 @@
         </div>
     </div>
 
+=======
+    <!-- ARIA Live Region for announcements -->
+    <div id="aria-live-region" 
+         role="status" 
+         aria-live="polite" 
+         aria-atomic="true" 
+         class="sr-only"></div>
+
+    <!-- Header -->
+>>>>>>> ab65855b52e06e7491bda7cb1037c074ce99a218
     <header class="bg-success text-white py-3" role="banner">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-md-6">
+<<<<<<< HEAD
                     <h1 class="h3 mb-0"><span data-translate="title">DeshKaVote - Voter Dashboard</span></h1>
                     <small><span data-translate="welcome">Welcome</span>, {{ voter.full_name }}</small>
+=======
+                    <h1 class="h3 mb-0" id="page-title">
+                        <span data-translate="title">DeshKaVote - Voter Dashboard</span>
+                    </h1>
+                    <small>
+                        <span data-translate="welcome">Welcome</span>, {{ voter.full_name }}
+                    </small>
+>>>>>>> ab65855b52e06e7491bda7cb1037c074ce99a218
                 </div>
                 <div class="col-md-6 text-md-end">
                     <span class="badge bg-light text-dark me-2">
@@ -313,11 +414,22 @@
                     </span>
                     <span class="badge bg-warning">
                         {% if voter.approval_status == 'approved' %}
+<<<<<<< HEAD
                             <i class="fas fa-check-circle"></i> <span data-translate="approved">Approved</span>
                         {% elif voter.approval_status == 'pending' %}
                             <i class="fas fa-clock"></i> <span data-translate="pending">Pending</span>
                         {% else %}
                             <i class="fas fa-times-circle"></i> <span data-translate="rejected">Rejected</span>
+=======
+                            <i class="fas fa-check-circle" aria-hidden="true"></i>
+                            <span data-translate="approved">Approved</span>
+                        {% elif voter.approval_status == 'pending' %}
+                            <i class="fas fa-clock" aria-hidden="true"></i>
+                            <span data-translate="pending">Pending Approval</span>
+                        {% else %}
+                            <i class="fas fa-times-circle" aria-hidden="true"></i>
+                            <span data-translate="rejected">Rejected</span>
+>>>>>>> ab65855b52e06e7491bda7cb1037c074ce99a218
                         {% endif %}
                     </span>
                 </div>
@@ -325,40 +437,72 @@
         </div>
     </header>
 
+<<<<<<< HEAD
     <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
         <div class="container">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
                     <a class="nav-link active" href="{% url 'voter_dashboard' %}">
                         <i class="fas fa-home"></i> <span data-translate="dashboard">Dashboard</span>
+=======
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom" role="navigation" aria-label="Main navigation">
+        <div class="container">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'voter_dashboard' %}" aria-current="page">
+                        <i class="fas fa-home" aria-hidden="true"></i>
+                        <span data-translate="dashboard">Dashboard</span>
+>>>>>>> ab65855b52e06e7491bda7cb1037c074ce99a218
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#elections">
+<<<<<<< HEAD
                         <i class="fas fa-vote-yea"></i> <span data-translate="elections">Elections</span>
+=======
+                        <i class="fas fa-vote-yea" aria-hidden="true"></i>
+                        <span data-translate="elections">Elections</span>
+>>>>>>> ab65855b52e06e7491bda7cb1037c074ce99a218
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#profile">
+<<<<<<< HEAD
                         <i class="fas fa-user"></i> <span data-translate="profile">Profile</span>
+=======
+                        <i class="fas fa-user" aria-hidden="true"></i>
+                        <span data-translate="profile">Profile</span>
+>>>>>>> ab65855b52e06e7491bda7cb1037c074ce99a218
                     </a>
                 </li>
             </ul>
             <ul class="navbar-nav">
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'voter_results' %}">
+<<<<<<< HEAD
                         <i class="fas fa-chart-bar"></i> <span data-translate="results">Results</span>
+=======
+                        <i class="fas fa-chart-bar" aria-hidden="true"></i>
+                        <span data-translate="results">Results</span>
+>>>>>>> ab65855b52e06e7491bda7cb1037c074ce99a218
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'logout' %}">
+<<<<<<< HEAD
                         <i class="fas fa-sign-out-alt"></i> <span data-translate="logout">Logout</span>
+=======
+                        <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+                        <span data-translate="logout">Logout</span>
+>>>>>>> ab65855b52e06e7491bda7cb1037c074ce99a218
                     </a>
                 </li>
             </ul>
         </div>
     </nav>
 
+<<<<<<< HEAD
     <main id="main-content" class="container my-4">
         {% if voter.approval_status != 'approved' %}
         <div class="row">
@@ -513,11 +657,53 @@
                             <div class="col-md-12 mb-3">
                                 <label class="form-label text-muted"><span data-translate="address">Address</span></label>
                                 <p class="mb-0">{{ voter.street_address }}, {{ voter.city }}, {{ voter.state }} - {{ voter.pincode }}</p>
+=======
+    <!-- Main Content -->
+    <main id="main-content" class="container my-4" role="main" aria-labelledby="page-title">
+        
+        {% if voter.approval_status != 'approved' %}
+            <!-- Approval Status Alert -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="alert {% if voter.approval_status == 'rejected' %}alert-danger{% else %}alert-warning{% endif %} border-2" role="alert">
+                        <div class="d-flex align-items-start">
+                            <div class="me-3">
+                                {% if voter.approval_status == 'rejected' %}
+                                    <i class="fas fa-exclamation-circle fa-2x" aria-hidden="true"></i>
+                                {% else %}
+                                    <div class="spinner-border spinner-border-sm text-warning me-2" role="status" aria-hidden="true">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <h5 class="alert-heading mb-1">
+                                    {% if voter.approval_status == 'rejected' %}
+                                        <span data-translate="accountRejected">Account Rejected</span>
+                                    {% else %}
+                                        <span data-translate="accountPending">Account Pending Approval</span>
+                                    {% endif %}
+                                </h5>
+                                <p class="mb-0">
+                                    {% if voter.approval_status == 'rejected' %}
+                                        <span data-translate="rejectionMessage">Your voter registration has been rejected.</span>
+                                        {% if voter.rejection_reason %}
+                                            <span data-translate="reason">Reason</span>: {{ voter.rejection_reason }}
+                                        {% endif %}
+                                    {% else %}
+                                        <span data-translate="pendingMessage">Your voter registration is currently under review by our administrators. You'll be able to participate in elections once your account is approved.</span>
+                                    {% endif %}
+                                </p>
+                                <small class="text-muted">
+                                    <span data-translate="registeredOn">Registered on</span>: {{ voter.created_at|date:"F d, Y" }}
+                                </small>
+>>>>>>> ab65855b52e06e7491bda7cb1037c074ce99a218
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+<<<<<<< HEAD
             
             <!-- Document Verification Section - RESTORED -->
             <div class="col-md-4">
@@ -582,10 +768,270 @@
                     </div>
                 </div>
             </div>
+=======
+        {% endif %}
+
+        <!-- Statistics Cards -->
+        <section class="row mb-4" aria-label="Statistics overview">
+            <div class="col-md-3 mb-3">
+                <div class="card text-center h-100" role="article" aria-label="Available Elections: {{ elections_data|length }}">
+                    <div class="card-body">
+                        <div class="display-6 text-primary mb-2">
+                            <i class="fas fa-vote-yea" aria-hidden="true"></i>
+                        </div>
+                        <h5 class="card-title">
+                            <span data-translate="availableElections">Available Elections</span>
+                        </h5>
+                        <p class="card-text display-6">{{ elections_data|length }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-3">
+                <div class="card text-center h-100" role="article" aria-label="Active Elections: {{ active_elections_count }}">
+                    <div class="card-body">
+                        <div class="display-6 text-success mb-2">
+                            <i class="fas fa-chart-line" aria-hidden="true"></i>
+                        </div>
+                        <h5 class="card-title">
+                            <span data-translate="activeElections">Active Elections</span>
+                        </h5>
+                        <p class="card-text display-6">{{ active_elections_count }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-3">
+                <div class="card text-center h-100" role="article" aria-label="Votes Cast: {{ votes_casted_count }}">
+                    <div class="card-body">
+                        <div class="display-6 text-info mb-2">
+                            <i class="fas fa-check-circle" aria-hidden="true"></i>
+                        </div>
+                        <h5 class="card-title">
+                            <span data-translate="votesCast">Votes Cast</span>
+                        </h5>
+                        <p class="card-text display-6" id="votesCastedCount">{{ votes_casted_count }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-3">
+                <div class="card text-center h-100" role="article" aria-label="Profile Status: Approved">
+                    <div class="card-body">
+                        <div class="display-6 text-warning mb-2">
+                            <i class="fas fa-user" aria-hidden="true"></i>
+                        </div>
+                        <h5 class="card-title">
+                            <span data-translate="profileStatus">Profile Status</span>
+                        </h5>
+                        <p class="card-text">
+                            <span class="badge bg-success">
+                                <span data-translate="approved">Approved</span>
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Elections Section -->
+        {% if voter.approval_status == 'approved' %}
+        <section id="elections" class="row mb-4" aria-labelledby="elections-heading">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0" id="elections-heading">
+                            <span data-translate="availableElections">Available Elections</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if elections_data %}
+                            {% for election_info in elections_data %}
+                                <div class="border rounded p-3 mb-3 election-container" 
+                                     data-election-id="{{ election_info.election.id }}"
+                                     role="article"
+                                     aria-label="Election: {{ election_info.election.name }}">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-8">
+                                            <h6 class="mb-1">{{ election_info.election.name }}</h6>
+                                            <p class="text-muted mb-2">
+                                                <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                                                {{ election_info.election.state }} - {{ election_info.election.election_type }}
+                                            </p>
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar" aria-hidden="true"></i>
+                                                {{ election_info.election.start_date|date:"M d, Y H:i" }} - 
+                                                {{ election_info.election.end_date|date:"M d, Y H:i" }}
+                                            </small>
+                                        </div>
+                                        <div class="col-md-4 text-md-end" id="election-actions-{{ election_info.election.id }}">
+                                            {% if election_info.has_voted %}
+                                                <div class="d-flex justify-content-end align-items-center voted-container">
+                                                    <span class="text-success fw-bold me-2">
+                                                        <i class="fas fa-check-circle" aria-hidden="true"></i>
+                                                        <span data-translate="voted">Voted</span>
+                                                    </span>
+                                                    <button class="btn btn-outline-secondary btn-sm" disabled aria-label="Vote already cast">
+                                                        <i class="fas fa-check" aria-hidden="true"></i>
+                                                        <span data-translate="voteCast">Vote Cast</span>
+                                                    </button>
+                                                </div>
+                                            {% elif election_info.is_active %}
+                                                <span class="badge bg-success mb-2">
+                                                    <span data-translate="active">Active</span>
+                                                </span><br>
+                                                <button type="button" 
+                                                        class="btn btn-primary vote-btn" 
+                                                        data-election-id="{{ election_info.election.id }}" 
+                                                        data-election-name="{{ election_info.election.name|escapejs }}"
+                                                        aria-label="Vote now in {{ election_info.election.name }}">
+                                                    <i class="fas fa-vote-yea" aria-hidden="true"></i>
+                                                    <span data-translate="voteNow">Vote Now</span>
+                                                </button>
+                                            {% else %}
+                                                <span class="badge bg-secondary mb-2">
+                                                    <span data-translate="upcoming">Upcoming</span>
+                                                </span><br>
+                                                <button class="btn btn-outline-secondary btn-sm" disabled aria-label="Election not started">
+                                                    <i class="fas fa-clock" aria-hidden="true"></i>
+                                                    <span data-translate="notStarted">Not Started</span>
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-4" role="status">
+                                <div class="display-1 text-muted mb-3">
+                                    <i class="fas fa-vote-yea" aria-hidden="true"></i>
+                                </div>
+                                <h5 class="text-muted">
+                                    <span data-translate="noElections">No Elections Available</span>
+                                </h5>
+                                <p class="text-muted">
+                                    <span data-translate="noElectionsDesc">There are currently no elections available for your constituency.</span>
+                                </p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Profile Section -->
+        <section id="profile" class="row mt-4" aria-labelledby="profile-heading">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0" id="profile-heading">
+                            <span data-translate="yourProfile">Your Profile</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted">
+                                    <span data-translate="fullName">Full Name</span>
+                                </label>
+                                <p class="mb-0">{{ voter.full_name }}</p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted">
+                                    <span data-translate="voterId">Voter ID</span>
+                                </label>
+                                <p class="mb-0">{{ voter.voter_id }}</p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted">
+                                    <span data-translate="email">Email</span>
+                                </label>
+                                <p class="mb-0">{{ voter.email }}</p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted">
+                                    <span data-translate="mobile">Mobile</span>
+                                </label>
+                                <p class="mb-0">{{ voter.mobile }}</p>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label text-muted">
+                                    <span data-translate="address">Address</span>
+                                </label>
+                                <p class="mb-0">{{ voter.street_address }}, {{ voter.city }}, {{ voter.state }} - {{ voter.pincode }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <span data-translate="documentVerification">Document Verification</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <strong>
+                                    <span data-translate="aadharCard">Aadhar Card</span>
+                                </strong>
+                                <span class="badge {% if voter.aadhar_verified %}bg-success{% else %}bg-warning{% endif %}">
+                                    {% if voter.aadhar_verified %}
+                                        <i class="fas fa-check-circle" aria-hidden="true"></i>
+                                        <span data-translate="verified">Verified</span>
+                                    {% else %}
+                                        <i class="fas fa-clock" aria-hidden="true"></i>
+                                        <span data-translate="pending">Pending</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <strong>
+                                    <span data-translate="panCard">PAN Card</span>
+                                </strong>
+                                <span class="badge {% if voter.pan_verified %}bg-success{% else %}bg-warning{% endif %}">
+                                    {% if voter.pan_verified %}
+                                        <i class="fas fa-check-circle" aria-hidden="true"></i>
+                                        <span data-translate="verified">Verified</span>
+                                    {% else %}
+                                        <i class="fas fa-clock" aria-hidden="true"></i>
+                                        <span data-translate="pending">Pending</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <strong>
+                                    <span data-translate="voterIdCard">Voter ID</span>
+                                </strong>
+                                <span class="badge {% if voter.voter_id_verified %}bg-success{% else %}bg-warning{% endif %}">
+                                    {% if voter.voter_id_verified %}
+                                        <i class="fas fa-check-circle" aria-hidden="true"></i>
+                                        <span data-translate="verified">Verified</span>
+                                    {% else %}
+                                        <i class="fas fa-clock" aria-hidden="true"></i>
+                                        <span data-translate="pending">Pending</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+>>>>>>> ab65855b52e06e7491bda7cb1037c074ce99a218
         </section>
         {% endif %}
     </main>
 
+<<<<<<< HEAD
     <footer class="bg-success text-white text-center py-3 mt-5">
         &copy; 2025 DeshKaVote. All rights reserved.
     </footer>
@@ -730,5 +1176,35 @@
         return cookieValue;
     }
     </script>
+=======
+    <!-- Voting Modal -->
+    <div class="modal fade" id="votingModal" tabindex="-1" aria-labelledby="votingModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="votingModalLabel">
+                        <i class="fas fa-vote-yea" aria-hidden="true"></i>
+                        <span data-translate="castYourVote">Cast Your Vote</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="votingContent">
+                    <!-- Content loaded dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-success text-white text-center py-3 mt-5" role="contentinfo">
+        <span data-translate="copyright">&copy; 2025 DeshKaVote. All rights reserved.</span>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{% static 'js/voter.js' %}"></script>
+    <script src="{% static 'js/accessibility.js' %}"></script>
+>>>>>>> ab65855b52e06e7491bda7cb1037c074ce99a218
 </body>
 </html>
