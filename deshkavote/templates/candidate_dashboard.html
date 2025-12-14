@@ -1,0 +1,401 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candidate Dashboard - DeshKaVote</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <style>
+        .performance-card {
+            border-left: 4px solid #138808;
+            transition: transform 0.2s;
+        }
+        .performance-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        .vote-bar {
+            height: 30px;
+            background: linear-gradient(90deg, #138808, #28a745);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            width: 0%;   /* JS will override */
+        }
+        .vote-bar::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.1);
+        }
+        .rank-badge {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .rank-1 { background: linear-gradient(135deg, #ffd700, #ffed4e); color: #000; }
+        .rank-2 { background: linear-gradient(135deg, #c0c0c0, #e8e8e8); color: #000; }
+        .rank-3 { background: linear-gradient(135deg, #cd7f32, #d4a574); color: #fff; }
+        .rank-other { background: linear-gradient(135deg, #6c757d, #868e96); color: #fff; }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="bg-success text-white py-3">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-user-tie"></i> Candidate Dashboard
+                    </h1>
+                    <small>Welcome, {{ candidate.name }}</small>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <span class="badge bg-light text-dark me-2">
+                        ID: {{ candidate.candidate_id }}
+                    </span>
+                    <span class="badge {% if candidate.approval_status == 'approved' %}bg-success{% elif candidate.approval_status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                        {% if candidate.approval_status == 'approved' %}
+                            <i class="fas fa-check-circle"></i> Approved
+                        {% elif candidate.approval_status == 'pending' %}
+                            <i class="fas fa-clock"></i> Pending Approval
+                        {% else %}
+                            <i class="fas fa-times-circle"></i> Rejected
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+        <div class="container">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'candidate_dashboard' %}">
+                        <i class="fas fa-home"></i> Dashboard
+                    </a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'logout' %}">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container my-4">
+
+        {% if candidate.approval_status != 'approved' %}
+        <!-- Pending/Rejected Status Alert -->
+        <div class="alert {% if candidate.approval_status == 'pending' %}alert-warning{% else %}alert-danger{% endif %}">
+            <h5 class="alert-heading mb-1">
+                {% if candidate.approval_status == 'pending' %}
+                    Account Pending Approval
+                {% else %}
+                    Account Rejected
+                {% endif %}
+            </h5>
+            <p class="mb-0">
+                {% if candidate.approval_status == 'pending' %}
+                    Your registration is under review.
+                {% else %}
+                    {{ candidate.rejection_reason|default:"Please contact the Election Commission." }}
+                {% endif %}
+            </p>
+        </div>
+        {% endif %}
+
+        <!-- Summary Cards -->
+        <section class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <div class="display-6 text-primary mb-2">
+                            <i class="fas fa-vote-yea"></i>
+                        </div>
+                        <h5 class="card-title">Elections</h5>
+                        <p class="card-text display-6">{{ elections_data|length }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <div class="display-6 text-success mb-2">
+                            <i class="fas fa-flag"></i>
+                        </div>
+                        <h5 class="card-title">Party</h5>
+                        <p class="card-text h5">{{ candidate.party }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <div class="display-6 text-info mb-2">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <h5 class="card-title">Constituency</h5>
+                        <p class="card-text h6">{{ candidate.constituency }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <div class="display-6 text-warning mb-2">
+                            <i class="fas fa-certificate"></i>
+                        </div>
+                        <h5 class="card-title">Symbol</h5>
+                        <p class="card-text h5">{{ candidate.symbol }}</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {% if candidate.approval_status == 'approved' %}
+        <!-- Election Performance -->
+        <section class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-line"></i> Election Performance
+                        </h5>
+                    </div>
+                    <div class="card-body">
+
+                        {% if elections_data %}
+                        {% for election_info in elections_data %}
+                        <div class="performance-card border rounded p-4 mb-4">
+
+                            <!-- Header -->
+                            <div class="row align-items-center mb-3">
+                                <div class="col-md-8">
+                                    <h5 class="mb-1">{{ election_info.election.name }}</h5>
+                                    <p class="text-muted mb-0">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        {{ election_info.election.state }} - {{ election_info.election.election_type }}<br>
+                                        <small>
+                                            <i class="fas fa-calendar"></i>
+                                            {{ election_info.election.start_date|date:"M d, Y" }} -
+                                            {{ election_info.election.end_date|date:"M d, Y" }}
+                                        </small>
+                                    </p>
+                                </div>
+                                <div class="col-md-4 text-md-end">
+                                    <span class="badge {% if election_info.election.status == 'active' %}bg-success{% elif election_info.election.status == 'completed' %}bg-secondary{% else %}bg-warning{% endif %} fs-6">
+                                        {{ election_info.election.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Your Performance -->
+                            <div class="row align-items-center mb-3 p-3 bg-light rounded">
+                                <div class="col-auto">
+                                    <div class="rank-badge rank-{% if election_info.my_rank == 1 %}1{% elif election_info.my_rank == 2 %}2{% elif election_info.my_rank == 3 %}3{% else %}other{% endif %}">
+                                        {% if election_info.my_rank == 'N/A' %}--{% else %}#{{ election_info.my_rank }}{% endif %}
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <h6 class="mb-1">Your Performance</h6>
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-grow-1 me-3">
+                                            <div class="vote-bar" data-width="{{ election_info.my_percentage|default:0|floatformat:0 }}"></div>
+                                        </div>
+                                        <div class="text-end" style="min-width:120px;">
+                                            <strong class="text-success fs-5">{{ election_info.my_votes }}</strong> votes<br>
+                                            <small class="text-muted">{{ election_info.my_percentage|default:'0'|floatformat:0 }}%</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Top Candidates -->
+                            <h6 class="mb-3">Top Candidates</h6>
+
+                            {% for candidate_data in election_info.top_candidates %}
+                            <div class="row align-items-center mb-2 {% if candidate_data.is_me %}bg-success bg-opacity-10{% endif %} p-2 rounded">
+                                <div class="col-auto">
+                                    <span class="badge {% if candidate_data.rank == 1 %}bg-warning{% elif candidate_data.rank == 2 %}bg-secondary{% else %}bg-light text-dark{% endif %} fs-6">
+                                        #{{ candidate_data.rank }}
+                                    </span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>{{ candidate_data.name }}</strong>
+                                    {% if candidate_data.is_me %}
+                                        <span class="badge bg-success ms-1">You</span>
+                                    {% endif %}
+                                    <br>
+                                    <small class="text-muted">{{ candidate_data.party }}</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="vote-bar" data-width="{{ candidate_data.percentage|default:0|floatformat:0 }}"></div>
+                                </div>
+                                <div class="col-md-2 text-end">
+                                    <strong>{{ candidate_data.votes }}</strong> votes<br>
+                                    <small class="text-muted">{{ candidate_data.percentage|default:'0'|floatformat:0 }}%</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+
+                            <div class="mt-3 pt-3 border-top">
+                                <strong>Total Votes Cast:</strong> {{ election_info.total_votes }}
+                            </div>
+
+                        </div>
+                        {% endfor %}
+
+                        {% else %}
+                        <div class="text-center py-5">
+                            <div class="display-1 text-muted mb-3">
+                                <i class="fas fa-inbox"></i>
+                            </div>
+                            <h5 class="text-muted">No Elections Yet</h5>
+                            <p class="text-muted">Contact admin to be added to upcoming elections.</p>
+                        </div>
+                        {% endif %}
+
+                    </div>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- Profile Section -->
+        <section class="row mb-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Your Profile</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted">Full Name</label>
+                                <p class="mb-0">{{ candidate.name }}</p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted">Candidate ID</label>
+                                <p class="mb-0">{{ candidate.candidate_id }}</p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted">Email</label>
+                                <p class="mb-0">{{ candidate.email }}</p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted">Mobile</label>
+                                <p class="mb-0">{{ candidate.mobile }}</p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted">Date of Birth</label>
+                                <p class="mb-0">{{ candidate.date_of_birth|date:"M d, Y" }}</p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted">Education</label>
+                                <p class="mb-0">{{ candidate.education|default:"Not specified" }}</p>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label text-muted">Address</label>
+                                <p class="mb-0">{{ candidate.street_address }}, {{ candidate.city }}, {{ candidate.state }} - {{ candidate.pincode }}</p>
+                            </div>
+
+                            {% if candidate.manifesto %}
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label text-muted">Manifesto / Vision</label>
+                                <p class="mb-0">{{ candidate.manifesto }}</p>
+                            </div>
+                            {% endif %}
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Additional Information</h5>
+                    </div>
+                    <div class="card-body">
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Criminal Cases</label>
+                            <p class="mb-0">{{ candidate.criminal_cases }}</p>
+                        </div>
+
+                        {% if candidate.assets_value %}
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Declared Assets</label>
+                            <p class="mb-0">₹{{ candidate.assets_value|floatformat:2 }}</p>
+                        </div>
+                        {% endif %}
+
+                        <label class="form-label text-muted">Documents</label>
+                        <div class="d-flex flex-column gap-2">
+
+                            {% if candidate.photo %}
+                            <a href="{{ candidate.photo.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-image"></i> View Photo
+                            </a>
+                            {% endif %}
+
+                            {% if candidate.aadhar_document %}
+                            <a href="{{ candidate.aadhar_document.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-file-pdf"></i> Aadhar Card
+                            </a>
+                            {% endif %}
+
+                            {% if candidate.affidavit %}
+                            <a href="{{ candidate.affidavit.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-file-pdf"></i> Affidavit
+                            </a>
+                            {% endif %}
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-success text-white text-center py-3 mt-5">
+        &copy; 2025 DeshKaVote. All rights reserved.
+    </footer>
+
+    <!-- JS to Apply Bar Widths -->
+    <script>
+        document.querySelectorAll(".vote-bar").forEach(bar => {
+            const width = bar.getAttribute("data-width");
+            if (width !== null) {
+                bar.style.width = width + "%";
+            }
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

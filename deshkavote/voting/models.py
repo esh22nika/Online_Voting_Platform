@@ -478,7 +478,7 @@ class CandidateUser(models.Model):
     manifesto = models.TextField(blank=True)
     
     # Additional Information
-    age = models.IntegerField(null=True, blank=True)
+    #age = models.IntegerField(null=True, blank=True)
     criminal_cases = models.IntegerField(default=0)
     assets_value = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
     
@@ -541,6 +541,16 @@ class CandidateUser(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def age(self):
+        """Calculate age from date of birth"""
+        if self.date_of_birth:
+            today = timezone.now().date()
+            return today.year - self.date_of_birth.year - (
+                (today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day)
+            )
+        return None
     
     def __str__(self):
         return f"{self.candidate_id} - {self.name}"
