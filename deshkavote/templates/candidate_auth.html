@@ -1,0 +1,206 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Candidate Portal - DeshKaVote</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="auth-page d-flex justify-content-center align-items-center vh-100">
+<div class="auth-card">
+  <div class="logo">DeshKaVote</div>
+  <div class="welcome-text" id="formTitle">Candidate Portal</div>
+  <div class="welcome-subtext" id="formSubtitle">Login to your candidate account</div>
+
+  <div class="tabs mb-4">
+    <div class="tab active" id="tabSignIn">Sign In</div>
+    <div class="tab" id="tabRegister">Registration</div>
+  </div>
+
+  <!-- SIGN IN FORM -->
+  <form id="signinForm" novalidate>
+    {% csrf_token %}
+    <div class="mb-3 text-start">
+      <label for="candidateId" class="form-label fw-bold">Candidate ID *</label>
+      <input type="text" id="candidateId" name="candidate_id" class="form-control" placeholder="Enter your Candidate ID" required />
+    </div>
+
+    <div class="mb-3 text-start">
+      <label for="password" class="form-label fw-bold">Password *</label>
+      <input type="password" id="password" name="password" class="form-control" placeholder="•••••••••••••••" required />
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100">Login</button>
+  </form>
+
+  <!-- REGISTRATION FORM -->
+  <form id="registerForm" style="display:none" novalidate enctype="multipart/form-data">
+    {% csrf_token %}
+    
+    <h5 class="text-start mb-3">Personal Information</h5>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="name" class="form-label fw-bold">Full Name *</label>
+        <input type="text" id="name" name="name" class="form-control" placeholder="Enter full name" required />
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="candidateIdReg" class="form-label fw-bold">Candidate ID *</label>
+        <input type="text" id="candidateIdReg" name="candidate_id" class="form-control" placeholder="Create Candidate ID" required />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="email" class="form-label fw-bold">Email Address *</label>
+        <input type="email" id="email" name="email" class="form-control" placeholder="Enter email" required />
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="mobile" class="form-label fw-bold">Mobile Number *</label>
+        <input type="tel" id="mobile" name="mobile" class="form-control" placeholder="10-digit number" required pattern="[0-9]{10}" />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="dob" class="form-label fw-bold">Date of Birth *</label>
+        <input type="date" id="dob" name="dob" class="form-control" required />
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="age" class="form-label fw-bold">Age *</label>
+        <input type="number" id="age" name="age" class="form-control" placeholder="Age" required min="25" />
+      </div>
+    </div>
+
+    <h5 class="text-start mb-3 mt-4">Political Information</h5>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="party" class="form-label fw-bold">Party *</label>
+        <select id="party" name="party" class="form-select" required>
+          <option value="">Select Party</option>
+          <option value="BJP">BJP</option>
+          <option value="Congress">Congress</option>
+          <option value="AAP">AAP</option>
+          <option value="Left Front">Left Front</option>
+          <option value="BSP">BSP</option>
+          <option value="SP">SP</option>
+          <option value="TMC">TMC</option>
+          <option value="JDU">JDU</option>
+          <option value="RJD">RJD</option>
+          <option value="Independent">Independent</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="constituency" class="form-label fw-bold">Constituency *</label>
+        <input type="text" id="constituency" name="constituency" class="form-control" placeholder="Enter constituency" required />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="symbol" class="form-label fw-bold">Symbol *</label>
+        <input type="text" id="symbol" name="symbol" class="form-control" placeholder="Party/Election symbol" required />
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="education" class="form-label fw-bold">Education</label>
+        <input type="text" id="education" name="education" class="form-control" placeholder="Highest qualification" />
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label for="manifesto" class="form-label fw-bold">Manifesto/Vision</label>
+      <textarea id="manifesto" name="manifesto" class="form-control" rows="3" placeholder="Brief description of your vision and promises"></textarea>
+    </div>
+
+    <h5 class="text-start mb-3 mt-4">Additional Information</h5>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="criminalCases" class="form-label fw-bold">Criminal Cases *</label>
+        <input type="number" id="criminalCases" name="criminal_cases" class="form-control" placeholder="Number of cases" required min="0" value="0" />
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="assetsValue" class="form-label fw-bold">Assets Value (₹)</label>
+        <input type="number" id="assetsValue" name="assets_value" class="form-control" placeholder="Total assets in rupees" min="0" />
+      </div>
+    </div>
+
+    <h5 class="text-start mb-3 mt-4">Address Information</h5>
+    <div class="mb-3">
+      <label for="streetAddress" class="form-label fw-bold">Street Address *</label>
+      <input type="text" id="streetAddress" name="street_address" class="form-control" placeholder="Enter street address" required />
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label for="city" class="form-label fw-bold">City *</label>
+        <input type="text" id="city" name="city" class="form-control" placeholder="City" required />
+      </div>
+      <div class="col-md-4 mb-3">
+        <label for="state" class="form-label fw-bold">State *</label>
+        <select id="state" name="state" class="form-select" required>
+          <option value="">Select State</option>
+          <option value="Andhra Pradesh">Andhra Pradesh</option>
+          <option value="Bihar">Bihar</option>
+          <option value="Delhi">Delhi</option>
+          <option value="Gujarat">Gujarat</option>
+          <option value="Karnataka">Karnataka</option>
+          <option value="Maharashtra">Maharashtra</option>
+          <option value="Tamil Nadu">Tamil Nadu</option>
+          <option value="Uttar Pradesh">Uttar Pradesh</option>
+          <option value="West Bengal">West Bengal</option>
+          <!-- Add all states -->
+        </select>
+      </div>
+      <div class="col-md-4 mb-3">
+        <label for="pincode" class="form-label fw-bold">Pincode *</label>
+        <input type="text" id="pincode" name="pincode" class="form-control" placeholder="6-digit pincode" required pattern="[0-9]{6}" />
+      </div>
+    </div>
+
+    <h5 class="text-start mb-3 mt-4">Document Upload</h5>
+    <div class="mb-3">
+      <label for="photo" class="form-label">Photo *</label>
+      <input type="file" class="form-control" id="photo" name="photo" accept=".jpg,.jpeg,.png" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="aadharDocument" class="form-label">Aadhar Card *</label>
+      <input type="file" class="form-control" id="aadharDocument" name="aadhar_document" accept=".pdf,.jpg,.jpeg,.png" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="educationCertificate" class="form-label">Education Certificate</label>
+      <input type="file" class="form-control" id="educationCertificate" name="education_certificate" accept=".pdf,.jpg,.jpeg,.png">
+    </div>
+
+    <div class="mb-3">
+      <label for="affidavit" class="form-label">Affidavit (Assets & Criminal Records) *</label>
+      <input type="file" class="form-control" id="affidavit" name="affidavit" accept=".pdf" required>
+    </div>
+
+    <h5 class="text-start mb-3 mt-4">Create Password</h5>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="registerPassword" class="form-label fw-bold">Password *</label>
+        <input type="password" id="registerPassword" name="password" class="form-control" placeholder="Create password" required />
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="confirmPassword" class="form-label fw-bold">Confirm Password *</label>
+        <input type="password" id="confirmPassword" name="confirm_password" class="form-control" placeholder="Confirm password" required />
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100">Register as Candidate</button>
+  </form>
+
+  <div class="create-account mt-4" id="toggleText" tabindex="0" role="button">
+    Don't have an account? Register as Candidate
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'js/candidate-auth.js' %}"></script>
+</body>
+</html>

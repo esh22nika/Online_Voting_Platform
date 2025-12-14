@@ -16,6 +16,7 @@
                     <a class="nav-link text-white fw-bold" href="{% url 'landing' %}">Home</a>
                     <a class="nav-link text-white fw-bold" href="{% url 'login' %}">Login/Register</a>
                     <a class="nav-link text-white fw-bold" href="{% url 'admin_login' %}">Admin Login</a>
+                    <a class="nav-link" href="{% url 'candidate_auth' %}">Candidate Login</a>
                     <a class="nav-link text-white fw-bold" href="{% url 'results' %}">Results</a>
                     {% if user.is_authenticated %}
                         <a class="nav-link text-white fw-bold" href="{% url 'logout' %}">Logout</a>

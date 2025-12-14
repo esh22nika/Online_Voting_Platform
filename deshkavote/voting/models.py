@@ -13,6 +13,7 @@ class CustomUser(AbstractUser):
         ('voter', 'Voter'),
         ('admin', 'Admin'),
         ('observer', 'Observer'),  # For monitoring elections
+        ('candidate', 'Candidate'),  # ADD THIS
     )
     role = models.CharField(max_length=10, choices=USER_ROLES, default='voter')
     mobile = models.CharField(max_length=10, validators=[RegexValidator(r'^\d{10}$')])
@@ -445,3 +446,122 @@ class OTPVerification(models.Model):
 
     def __str__(self):
         return f"OTP for {self.email or self.mobile} - Verified: {self.verified}"
+    
+# Add to voting/models.py - Insert after CustomUser class
+
+class CandidateUser(models.Model):
+    """Separate user model for candidates"""
+    APPROVAL_STATUS_CHOICES = (
+        ('pending', 'Pending Approval'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    )
+    
+    user = models.OneToOneField(
+        CustomUser, 
+        on_delete=models.CASCADE,
+        related_name='candidate_profile'
+    )
+    
+    # Basic Information
+    candidate_id = models.CharField(max_length=20, unique=True)
+    name = models.CharField(max_length=100)
+    email = models.EmailField(unique=True)
+    mobile = models.CharField(max_length=10, validators=[RegexValidator(r'^\d{10}$')])
+    date_of_birth = models.DateField()
+    
+    # Political Information
+    party = models.CharField(max_length=50, choices=Candidate.PARTY_CHOICES)
+    constituency = models.CharField(max_length=100)
+    symbol = models.CharField(max_length=50)
+    education = models.CharField(max_length=200, blank=True)
+    manifesto = models.TextField(blank=True)
+    
+    # Additional Information
+    age = models.IntegerField(null=True, blank=True)
+    criminal_cases = models.IntegerField(default=0)
+    assets_value = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    
+    # Address Information
+    street_address = models.TextField()
+    city = models.CharField(max_length=50)
+    state = models.CharField(max_length=50)
+    pincode = models.CharField(max_length=6)
+    
+    # Documents
+    photo = models.FileField(
+        upload_to='candidate_documents/photos/',
+        null=True,
+        blank=True,
+        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png'])]
+    )
+    aadhar_document = models.FileField(
+        upload_to='candidate_documents/aadhar/',
+        null=True,
+        blank=True,
+        validators=[FileExtensionValidator(['pdf', 'jpg', 'jpeg', 'png'])]
+    )
+    education_certificate = models.FileField(
+        upload_to='candidate_documents/education/',
+        null=True,
+        blank=True,
+        validators=[FileExtensionValidator(['pdf', 'jpg', 'jpeg', 'png'])]
+    )
+    affidavit = models.FileField(
+        upload_to='candidate_documents/affidavit/',
+        null=True,
+        blank=True,
+        validators=[FileExtensionValidator(['pdf'])]
+    )
+    
+    # Approval system
+    approval_status = models.CharField(
+        max_length=10,
+        choices=APPROVAL_STATUS_CHOICES,
+        default='pending'
+    )
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='approved_candidates'
+    )
+    approval_date = models.DateTimeField(null=True, blank=True)
+    rejection_reason = models.TextField(null=True, blank=True)
+    
+    # Linked candidate profile (created after approval)
+    linked_candidate = models.OneToOneField(
+        'Candidate',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='candidate_user'
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.candidate_id} - {self.name}"
+    
+    @property
+    def is_approved(self):
+        return self.approval_status == 'approved'
+    
+    def get_active_elections(self):
+        """Get elections this candidate is participating in"""
+        if self.linked_candidate:
+            return Election.objects.filter(
+                candidates=self.linked_candidate,
+                status='active'
+            )
+        return Election.objects.none()
+    
+    def get_all_elections(self):
+        """Get all elections this candidate is/was participating in"""
+        if self.linked_candidate:
+            return Election.objects.filter(
+                candidates=self.linked_candidate
+            )
+        return Election.objects.none()

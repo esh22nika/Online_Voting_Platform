@@ -25,6 +25,7 @@ import csv
 from django.shortcuts import render, redirect
 from django.contrib.auth import login
 from .models import CustomUser
+from .models import CandidateUser
 from .otp_service import OTPService
 from .forms import DocumentUploadForm
 # Import Django Channels libraries
@@ -2402,3 +2403,359 @@ def download_voters_list(request):
     except Exception as e:
         logger.error(f"Error downloading voters list: {e}")
         return HttpResponse(f"Error: {str(e)}", status=500)
+
+# Then add these view functions anywhere in views.py (I suggest after logout_user):
+
+def candidate_auth_page(request):
+    """Candidate login/register page view"""
+    return render(request, 'candidate_auth.html')
+
+@csrf_exempt
+def candidate_register(request):
+    """Candidate registration with approval system"""
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                data = request.POST
+                password = data.get('password')
+                
+                if not password or len(password) < 6:
+                    return JsonResponse({'success': False, 'message': 'Password must be at least 6 characters'})
+                
+                # Validate candidate_id uniqueness
+                candidate_id = data.get('candidate_id').strip()
+                if CandidateUser.objects.filter(candidate_id=candidate_id).exists():
+                    return JsonResponse({'success': False, 'message': 'Candidate ID already exists'})
+                
+                if CustomUser.objects.filter(username=candidate_id).exists():
+                    return JsonResponse({'success': False, 'message': 'User already exists'})
+                
+                # Validate email uniqueness
+                email = data.get('email').strip()
+                if CandidateUser.objects.filter(email=email).exists():
+                    return JsonResponse({'success': False, 'message': 'Email already registered'})
+                
+                # Create user
+                user = CustomUser.objects.create_user(
+                    username=candidate_id,
+                    password=password,
+                    role='candidate',
+                    is_active=False,  # Pending approval
+                    mobile=data.get('mobile').strip()
+                )
+                
+                # Create candidate profile
+                candidate_user = CandidateUser.objects.create(
+                    user=user,
+                    candidate_id=candidate_id,
+                    name=data.get('name').strip(),
+                    email=email,
+                    mobile=data.get('mobile').strip(),
+                    date_of_birth=data.get('dob'),
+                    age=data.get('age'),
+                    party=data.get('party'),
+                    constituency=data.get('constituency').strip(),
+                    symbol=data.get('symbol').strip(),
+                    education=data.get('education', '').strip(),
+                    manifesto=data.get('manifesto', '').strip(),
+                    criminal_cases=data.get('criminal_cases', 0),
+                    assets_value=data.get('assets_value') or None,
+                    street_address=data.get('street_address').strip(),
+                    city=data.get('city').strip(),
+                    state=data.get('state').strip(),
+                    pincode=data.get('pincode').strip(),
+                    photo=request.FILES.get('photo'),
+                    aadhar_document=request.FILES.get('aadhar_document'),
+                    education_certificate=request.FILES.get('education_certificate'),
+                    affidavit=request.FILES.get('affidavit'),
+                    approval_status='pending'
+                )
+                
+                create_audit_log(
+                    'candidate_registration',
+                    user=user,
+                    details={
+                        'candidate_id': candidate_id, 
+                        'name': candidate_user.name,
+                        'party': candidate_user.party,
+                        'constituency': candidate_user.constituency
+                    },
+                    request=request
+                )
+                
+                # Notify admin via websocket
+                channel_layer = get_channel_layer()
+                async_to_sync(channel_layer.group_send)(
+                    "admin_dashboard", {
+                        "type": "send_admin_update",
+                        "data": {
+                            "type": "new_candidate_registration",
+                            "message": f"New candidate registration: {candidate_user.name}"
+                        }
+                    }
+                )
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Registration successful! Your account is pending approval. You will be notified once approved.'
+                })
+                
+        except Exception as e:
+            logger.error(f"Candidate registration error: {str(e)}")
+            return JsonResponse({'success': False, 'message': f'Registration failed: {str(e)}'})
+    
+    return JsonResponse({'success': False, 'message': 'Invalid request method'})
+
+@csrf_exempt
+def candidate_login(request):
+    """Candidate login with approval check"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            candidate_id = data.get('candidate_id')
+            password = data.get('password')
+            
+            if not candidate_id or not password:
+                return JsonResponse({'success': False, 'message': 'Candidate ID and password are required'})
+            
+            try:
+                user = CustomUser.objects.get(username=candidate_id)
+                
+                if user.check_password(password) and user.role == 'candidate':
+                    candidate_user = CandidateUser.objects.get(user=user)
+                    
+                    if candidate_user.approval_status == 'pending':
+                        return JsonResponse({
+                            'success': False,
+                            'message': 'Your account is pending approval. Please wait for admin approval.'
+                        })
+                    elif candidate_user.approval_status == 'rejected':
+                        return JsonResponse({
+                            'success': False,
+                            'message': f'Your account has been rejected. Reason: {candidate_user.rejection_reason or "Contact admin for details"}'
+                        })
+                    elif candidate_user.approval_status == 'approved' and user.is_active:
+                        login(request, user)
+                        
+                        create_audit_log(
+                            'candidate_login',
+                            user=user,
+                            details={'candidate_id': candidate_id, 'name': candidate_user.name},
+                            request=request
+                        )
+                        
+                        logger.info(f"Successful login for candidate: {candidate_id}")
+                        return JsonResponse({
+                            'success': True,
+                            'message': 'Login successful',
+                            'redirect_url': '/candidate-dashboard/'
+                        })
+                    else:
+                        return JsonResponse({
+                            'success': False,
+                            'message': 'Account not activated. Please contact admin.'
+                        })
+                else:
+                    return JsonResponse({'success': False, 'message': 'Invalid Candidate ID or password'})
+                    
+            except CustomUser.DoesNotExist:
+                return JsonResponse({'success': False, 'message': 'Invalid Candidate ID or password'})
+            except CandidateUser.DoesNotExist:
+                return JsonResponse({'success': False, 'message': 'Candidate profile not found'})
+                
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'message': 'Invalid JSON data'})
+        except Exception as e:
+            logger.error(f"Candidate login error: {str(e)}")
+            return JsonResponse({'success': False, 'message': f'Login failed: {str(e)}'})
+    
+    return JsonResponse({'success': False, 'message': 'Invalid request method'})
+
+@login_required
+def candidate_dashboard(request):
+    """Candidate dashboard showing their elections and performance"""
+    if request.user.role != 'candidate':
+        return redirect('landing')
+    
+    try:
+        candidate_user = CandidateUser.objects.get(user=request.user)
+        
+        if candidate_user.approval_status != 'approved':
+            context = {
+                'candidate': candidate_user,
+                'approval_status': candidate_user.approval_status,
+                'rejection_reason': candidate_user.rejection_reason if candidate_user.approval_status == 'rejected' else None,
+                'elections_data': [],
+            }
+            return render(request, 'candidate_dashboard.html', context)
+        
+        # Get elections and vote statistics
+        elections_data = []
+        if candidate_user.linked_candidate:
+            elections = candidate_user.get_all_elections()
+            
+            for election in elections:
+                vote_counts = Vote.objects.filter(
+                    election=election,
+                    status='finalized'
+                ).values('candidate__id', 'candidate__name', 'candidate__party').annotate(
+                    vote_count=Count('id')
+                ).order_by('-vote_count')
+                
+                total_votes = sum(r['vote_count'] for r in vote_counts)
+                
+                # Find this candidate's position
+                my_votes = 0
+                my_percentage = 0
+                my_rank = 0
+                
+                for idx, r in enumerate(vote_counts, 1):
+                    if str(r['candidate__id']) == str(candidate_user.linked_candidate.id):
+                        my_votes = r['vote_count']
+                        my_percentage = (my_votes / total_votes * 100) if total_votes > 0 else 0
+                        my_rank = idx
+                        break
+                
+                # Prepare top 3 candidates
+                top_candidates = []
+                for idx, r in enumerate(list(vote_counts)[:3], 1):
+                    percentage = (r['vote_count'] / total_votes * 100) if total_votes > 0 else 0
+                    top_candidates.append({
+                        'rank': idx,
+                        'name': r['candidate__name'],
+                        'party': r['candidate__party'],
+                        'votes': r['vote_count'],
+                        'percentage': round(percentage, 2),
+                        'is_me': str(r['candidate__id']) == str(candidate_user.linked_candidate.id)
+                    })
+                
+                elections_data.append({
+                    'election': election,
+                    'total_votes': total_votes,
+                    'my_votes': my_votes,
+                    'my_percentage': round(my_percentage, 2),
+                    'my_rank': my_rank if my_rank > 0 else 'N/A',
+                    'top_candidates': top_candidates
+                })
+        
+        context = {
+            'candidate': candidate_user,
+            'elections_data': elections_data,
+            'approval_status': 'approved',
+        }
+        return render(request, 'candidate_dashboard.html', context)
+        
+    except CandidateUser.DoesNotExist:
+        messages.error(request, 'Candidate profile not found')
+        return redirect('landing')
+
+# Admin views for managing candidate users
+@csrf_exempt
+@login_required
+def approve_candidate_user(request):
+    """Admin approves candidate and creates linked Candidate profile"""
+    if not (request.user.is_staff or request.user.role == 'admin'):
+        return JsonResponse({'success': False, 'message': 'Unauthorized'})
+    
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                data = json.loads(request.body)
+                candidate_user_id = data.get('candidate_user_id')
+                election_id = data.get('election_id')  # Optional: link to election immediately
+                
+                candidate_user = get_object_or_404(CandidateUser, id=candidate_user_id)
+                
+                # Update approval status
+                candidate_user.approval_status = 'approved'
+                candidate_user.approved_by = request.user
+                candidate_user.approval_date = timezone.now()
+                
+                # Activate user account
+                candidate_user.user.is_active = True
+                candidate_user.user.save()
+                
+                # Create linked Candidate profile if not exists
+                if not candidate_user.linked_candidate:
+                    linked_candidate = Candidate.objects.create(
+                        name=candidate_user.name,
+                        party=candidate_user.party,
+                        constituency=candidate_user.constituency,
+                        symbol=candidate_user.symbol,
+                        education=candidate_user.education,
+                        manifesto=candidate_user.manifesto,
+                        age=candidate_user.age,
+                        criminal_cases=candidate_user.criminal_cases,
+                        assets_value=candidate_user.assets_value,
+                        election=get_object_or_404(Election, id=election_id) if election_id else Election.objects.filter(status='upcoming').first(),
+                        is_verified=True
+                    )
+                    candidate_user.linked_candidate = linked_candidate
+                
+                candidate_user.save()
+                
+                create_audit_log(
+                    'candidate_approved',
+                    user=request.user,
+                    details={
+                        'candidate_id': candidate_user.candidate_id,
+                        'candidate_name': candidate_user.name,
+                        'admin_id': request.user.id
+                    },
+                    request=request
+                )
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': f'Candidate {candidate_user.name} approved successfully'
+                })
+                
+        except Exception as e:
+            logger.error(f"Error approving candidate: {str(e)}")
+            return JsonResponse({'success': False, 'message': f'Error: {str(e)}'})
+    
+    return JsonResponse({'success': False, 'message': 'Invalid request method'})
+
+@csrf_exempt
+@login_required
+def reject_candidate_user(request):
+    """Admin rejects candidate registration"""
+    if not (request.user.is_staff or request.user.role == 'admin'):
+        return JsonResponse({'success': False, 'message': 'Unauthorized'})
+    
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                data = json.loads(request.body)
+                candidate_user_id = data.get('candidate_user_id')
+                reason = data.get('reason', 'No reason provided')
+                
+                candidate_user = get_object_or_404(CandidateUser, id=candidate_user_id)
+                
+                candidate_user.approval_status = 'rejected'
+                candidate_user.rejection_reason = reason
+                candidate_user.save()
+                
+                candidate_user.user.is_active = False
+                candidate_user.user.save()
+                
+                create_audit_log(
+                    'candidate_rejected',
+                    user=request.user,
+                    details={
+                        'candidate_id': candidate_user.candidate_id,
+                        'candidate_name': candidate_user.name,
+                        'rejection_reason': reason
+                    },
+                    request=request
+                )
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': f'Candidate {candidate_user.name} rejected'
+                })
+                
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': f'Error: {str(e)}'})
+    
+    return JsonResponse({'success': False, 'message': 'Invalid request method'})    

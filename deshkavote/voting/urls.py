@@ -46,6 +46,10 @@ urlpatterns = [
     path('api/get-available-candidates/', views.get_available_candidates, name='get_available_candidates'),
     path('api/get-live-election-polls/', views.get_live_election_polls, name='get_live_election_polls'),
 
+    # Admin APIs for candidate management
+    path('api/approve-candidate-user/', views.approve_candidate_user, name='approve_candidate_user'),
+    path('api/reject-candidate-user/', views.reject_candidate_user, name='reject_candidate_user'),
+
     # Real-time monitoring & stats APIs
     path('api/admin-stats/', views.admin_stats, name='admin_stats'),
     path('api/election-statistics/', views.get_election_statistics, name='election_statistics'),
@@ -69,6 +73,12 @@ urlpatterns = [
     path('verify-otp/', views.verify_otp, name='verify_otp'),
     path('documents/upload/', upload_documents, name='upload_documents'),
     path('api/verify-and-approve-voter/', views.verify_and_approve_voter, name='verify_and_approve_voter'),
+
+    # Add these URLs
+    path('candidate-auth/', views.candidate_auth_page, name='candidate_auth'),
+    path('candidate-register/', views.candidate_register, name='candidate_register'),
+    path('candidate-login/', views.candidate_login, name='candidate_login'),
+    path('candidate-dashboard/', views.candidate_dashboard, name='candidate_dashboard'),
 ]
 
 websocket_urlpatterns = [
