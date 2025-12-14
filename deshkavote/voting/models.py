@@ -71,7 +71,7 @@ class Voter(models.Model):
         null=True,
         blank=True,
         validators=[FileExtensionValidator(['pdf', 'jpg', 'jpeg', 'png'])],
-        help_text='Upload Voter ID Card (PDF/Image)'
+        help_text='Upload Voter ID Card- Optional (PDF/Image)'
     )
     # Enhanced location data for election eligibility
     constituency = models.CharField(max_length=100, blank=True)

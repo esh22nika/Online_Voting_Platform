@@ -22,8 +22,8 @@
   <!-- SIGN IN FORM -->
   <form id="signinForm" novalidate>
     <div class="mb-3 text-start">
-      <label for="voterId" class="form-label fw-bold">Voter ID *</label>
-      <input type="text" id="voterId" name="voter_id" class="form-control" placeholder="Enter your Voter ID" required />
+      <label for="voterId" class="form-label fw-bold">User ID *</label>
+      <input type="text" id="voterId" name="voter_id" class="form-control" placeholder="Enter your User ID" required />
     </div>
 
     <div class="mb-3 text-start">
@@ -140,8 +140,8 @@
     </div>
 
     <div class="mb-3 text-start">
-      <label for="registerVoterId" class="form-label fw-bold">Voter ID *</label>
-      <input type="text" id="registerVoterId" name="voterId" class="form-control" placeholder="Enter your Voter ID" required />
+      <label for="registerVoterId" class="form-label fw-bold">User ID *</label>
+      <input type="text" id="registerVoterId" name="voterId" class="form-control" placeholder="Enter your User ID" required />
     </div>
 
     <div class="row">
@@ -158,21 +158,21 @@
     {% csrf_token %}
 
     <hr>
-    <h5 class="mt-4 mb-3">Document Verification</h5>
+    <h5 class="mt-4 mb-3">Document Verification *</h5>
     <p class="text-muted">Please upload the following documents for verification (PDF, JPG, PNG accepted):</p>
 
     <div class="mb-3">
-      <label for="aadhar_document" class="form-label">Aadhar Card</label>
+      <label for="aadhar_document" class="form-label">Aadhar Card *</label>
       <input type="file" class="form-control" id="aadhar_document" name="aadhar_document" accept=".pdf,.jpg,.jpeg,.png">
     </div>
 
     <div class="mb-3">
-      <label for="pan_document" class="form-label">PAN Card</label>
+      <label for="pan_document" class="form-label">PAN Card *</label>
       <input type="file" class="form-control" id="pan_document" name="pan_document" accept=".pdf,.jpg,.jpeg,.png">
     </div>
 
     <div class="mb-3">
-      <label for="voter_id_document" class="form-label">Voter ID Card</label>
+      <label for="voter_id_document" class="form-label">Voter ID Card (Optional)</label>
       <input type="file" class="form-control" id="voter_id_document" name="voter_id_document" accept=".pdf,.jpg,.jpeg,.png">
     </div>
 
