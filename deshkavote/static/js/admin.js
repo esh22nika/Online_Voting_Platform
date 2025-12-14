@@ -1961,3 +1961,335 @@ function showEditCandidateModal(candidate, candidateId) {
         this.remove();
     });
 }
+
+// ========================================
+// CANDIDATE USER VERIFICATION FUNCTIONS
+// ========================================
+
+let currentRejectCandidateUserId = null;
+
+function viewCandidateUserDetails(candidateUserId) {
+    fetch(`/api/candidate-user-details/${candidateUserId}/`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showCandidateUserDetailsModal(data.candidate_user);
+        } else {
+            Swal.fire('Error', 'Failed to load candidate details', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire('Error', 'Failed to load candidate details', 'error');
+    });
+}
+
+function showCandidateUserDetailsModal(candUser) {
+    const modalHTML = `
+        <div class="modal fade" id="candidateUserDetailsModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Candidate Details: ${candUser.name}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Personal Information</h6>
+                                <p><strong>Candidate ID:</strong> ${candUser.candidate_id}</p>
+                                <p><strong>Name:</strong> ${candUser.name}</p>
+                                <p><strong>Email:</strong> ${candUser.email}</p>
+                                <p><strong>Mobile:</strong> ${candUser.mobile}</p>
+                                <p><strong>Date of Birth:</strong> ${candUser.date_of_birth}</p>
+                                <p><strong>Age:</strong> ${candUser.age} years</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Political Information</h6>
+                                <p><strong>Party:</strong> <span class="badge bg-secondary">${candUser.party}</span></p>
+                                <p><strong>Constituency:</strong> ${candUser.constituency}</p>
+                                <p><strong>Symbol:</strong> ${candUser.symbol}</p>
+                                <p><strong>Education:</strong> ${candUser.education || 'Not specified'}</p>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h6>Address</h6>
+                                <p>${candUser.street_address}, ${candUser.city}, ${candUser.state} - ${candUser.pincode}</p>
+                            </div>
+                        </div>
+                        
+                        ${candUser.manifesto ? `
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h6>Manifesto/Vision</h6>
+                                <p>${candUser.manifesto}</p>
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Additional Information</h6>
+                                <p><strong>Criminal Cases:</strong> ${candUser.criminal_cases}</p>
+                                <p><strong>Assets Value:</strong> ₹${parseFloat(candUser.assets_value).toLocaleString('en-IN')}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Documents</h6>
+                                ${candUser.photo ? `<a href="${candUser.photo}" target="_blank" class="btn btn-sm btn-outline-primary me-2 mb-2"><i class="fas fa-image"></i> Photo</a>` : ''}
+                                ${candUser.aadhar_document ? `<a href="${candUser.aadhar_document}" target="_blank" class="btn btn-sm btn-outline-primary me-2 mb-2"><i class="fas fa-file-pdf"></i> Aadhar</a>` : ''}
+                                ${candUser.education_certificate ? `<a href="${candUser.education_certificate}" target="_blank" class="btn btn-sm btn-outline-primary me-2 mb-2"><i class="fas fa-file-pdf"></i> Education</a>` : ''}
+                                ${candUser.affidavit ? `<a href="${candUser.affidavit}" target="_blank" class="btn btn-sm btn-outline-primary me-2 mb-2"><i class="fas fa-file-pdf"></i> Affidavit</a>` : ''}
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        <small class="text-muted">Registered: ${candUser.created_at}</small>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        ${candUser.approval_status === 'pending' ? `
+                            <button type="button" class="btn btn-success" onclick="approveCandidateUser('${candUser.id}')">
+                                <i class="fas fa-check"></i> Approve & Add to Elections
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const existingModal = document.getElementById('candidateUserDetailsModal');
+    if (existingModal) existingModal.remove();
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    const modal = new bootstrap.Modal(document.getElementById('candidateUserDetailsModal'));
+    modal.show();
+    
+    document.getElementById('candidateUserDetailsModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+function approveCandidateUser(candidateUserId) {
+    // Show election selection modal
+    showElectionSelectionForCandidate(candidateUserId);
+}
+
+function showElectionSelectionForCandidate(candidateUserId) {
+    const electionsHTML = `
+        <div class="modal fade" id="electionSelectionModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Select Election for Candidate</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="candidateElectionSelect" class="form-label">Choose Election:</label>
+                            <select class="form-select" id="candidateElectionSelect">
+                                <option value="">Select an election</option>
+                                ${Array.from(document.querySelectorAll('#electionsTable tbody tr')).map(row => {
+                                    const electionId = row.dataset.electionId;
+                                    const electionName = row.querySelector('td:first-child').textContent;
+                                    return `<option value="${electionId}">${electionName}</option>`;
+                                }).join('')}
+                            </select>
+                        </div>
+                        <div class="alert alert-info">
+                            <small>The candidate will be added to the selected election after approval.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-success" onclick="confirmCandidateApproval('${candidateUserId}')">
+                            <i class="fas fa-check"></i> Approve & Add
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const existingModal = document.getElementById('electionSelectionModal');
+    if (existingModal) existingModal.remove();
+    
+    document.body.insertAdjacentHTML('beforeend', electionsHTML);
+    
+    // Close the details modal first
+    const detailsModal = bootstrap.Modal.getInstance(document.getElementById('candidateUserDetailsModal'));
+    if (detailsModal) detailsModal.hide();
+    
+    const modal = new bootstrap.Modal(document.getElementById('electionSelectionModal'));
+    modal.show();
+}
+
+function confirmCandidateApproval(candidateUserId) {
+    const electionId = document.getElementById('candidateElectionSelect').value;
+    
+    if (!electionId) {
+        Swal.fire('Error', 'Please select an election', 'warning');
+        return;
+    }
+    
+    Swal.fire({
+        title: 'Confirm Approval',
+        text: 'Are you sure you want to approve this candidate and add them to the selected election?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        confirmButtonText: 'Yes, Approve'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: 'Processing...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+            
+            fetch('/api/approve-candidate-user/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken(),
+                },
+                body: JSON.stringify({
+                    candidate_user_id: candidateUserId,
+                    election_id: electionId
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const row = document.getElementById(`candidate-user-${candidateUserId}`);
+                    if (row) row.remove();
+                    
+                    bootstrap.Modal.getInstance(document.getElementById('electionSelectionModal')).hide();
+                    
+                    Swal.fire({
+                        title: 'Approved!',
+                        text: data.message,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => window.location.reload());
+                } else {
+                    throw new Error(data.message || 'Failed to approve candidate');
+                }
+            })
+            .catch(error => {
+                Swal.fire('Error', error.message, 'error');
+            });
+        }
+    });
+}
+
+function showRejectCandidateModal(candidateUserId, candidateName) {
+    currentRejectCandidateUserId = candidateUserId;
+    
+    const modalHTML = `
+        <div class="modal fade" id="rejectCandidateUserModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Reject Candidate</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Reject candidate <strong>${candidateName}</strong>?</p>
+                        <div class="mb-3">
+                            <label for="candidateRejectionReason" class="form-label">Reason for rejection:</label>
+                            <textarea class="form-control" id="candidateRejectionReason" rows="3" placeholder="Please provide a reason..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger" onclick="confirmRejectCandidateUser()">Reject Candidate</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const existingModal = document.getElementById('rejectCandidateUserModal');
+    if (existingModal) existingModal.remove();
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    const modal = new bootstrap.Modal(document.getElementById('rejectCandidateUserModal'));
+    modal.show();
+}
+
+function confirmRejectCandidateUser() {
+    const reason = document.getElementById('candidateRejectionReason').value.trim();
+    
+    if (!reason) {
+        showToast('Please provide a reason for rejection', 'warning');
+        return;
+    }
+    
+    const button = document.querySelector('#rejectCandidateUserModal .btn-danger');
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+    
+    fetch('/api/reject-candidate-user/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+        },
+        body: JSON.stringify({
+            candidate_user_id: currentRejectCandidateUserId,
+            reason: reason
+        }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const row = document.getElementById(`candidate-user-${currentRejectCandidateUserId}`);
+            if (row) row.remove();
+            
+            bootstrap.Modal.getInstance(document.getElementById('rejectCandidateUserModal')).hide();
+            showToast('Candidate rejected successfully', 'success');
+        } else {
+            throw new Error(data.message || 'Failed to reject candidate');
+        }
+    })
+    .catch(error => {
+        showToast(error.message, 'error');
+        button.disabled = false;
+        button.innerHTML = originalText;
+    });
+}
+
+function reconsiderCandidateUser(candidateUserId) {
+    if (confirm('Are you sure you want to reconsider this rejected candidate?')) {
+        fetch('/api/reconsider-candidate-user/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken(),
+            },
+            body: JSON.stringify({ candidate_user_id: candidateUserId }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Candidate moved back to pending approval', 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast(data.message || 'Failed to reconsider candidate', 'error');
+            }
+        })
+        .catch(error => {
+            showToast('Error reconsidering candidate', 'error');
+        });
+    }
+}

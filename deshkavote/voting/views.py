@@ -707,7 +707,10 @@ def admin_dashboard(request):
     rejected_voters = Voter.objects.filter(approval_status='rejected').order_by('-updated_at')
     elections = Election.objects.all().order_by('-created_at')
     candidates = Candidate.objects.all().order_by('-created_at')
-
+    # ADD THESE LINES FOR CANDIDATE USERS
+    pending_candidate_users = CandidateUser.objects.filter(approval_status='pending').order_by('-created_at')
+    approved_candidate_users = CandidateUser.objects.filter(approval_status='approved').order_by('-approval_date')
+    rejected_candidate_users = CandidateUser.objects.filter(approval_status='rejected').order_by('-updated_at')
     # --- START OF MODIFIED LOGIC ---
     # Calculate vote counts and leading candidate for each election
     for election in elections:
@@ -2440,11 +2443,11 @@ def candidate_register(request):
                     username=candidate_id,
                     password=password,
                     role='candidate',
-                    is_active=False,  # Pending approval
+                    is_active=False,
                     mobile=data.get('mobile').strip()
                 )
                 
-                # Create candidate profile
+                # Create candidate profile (REMOVED age field)
                 candidate_user = CandidateUser.objects.create(
                     user=user,
                     candidate_id=candidate_id,
@@ -2452,7 +2455,7 @@ def candidate_register(request):
                     email=email,
                     mobile=data.get('mobile').strip(),
                     date_of_birth=data.get('dob'),
-                    age=data.get('age'),
+                    # age field removed - it's calculated automatically
                     party=data.get('party'),
                     constituency=data.get('constituency').strip(),
                     symbol=data.get('symbol').strip(),
@@ -2759,3 +2762,72 @@ def reject_candidate_user(request):
             return JsonResponse({'success': False, 'message': f'Error: {str(e)}'})
     
     return JsonResponse({'success': False, 'message': 'Invalid request method'})    
+
+@require_GET
+@login_required
+def get_candidate_user_details(request, candidate_user_id):
+    """Get candidate user details for admin verification"""
+    if not (request.user.is_staff or request.user.role == 'admin'):
+        return JsonResponse({'success': False, 'message': 'Unauthorized'})
+    
+    candidate_user = get_object_or_404(CandidateUser, id=candidate_user_id)
+    
+    data = {
+        'id': candidate_user.id,
+        'candidate_id': candidate_user.candidate_id,
+        'name': candidate_user.name,
+        'email': candidate_user.email,
+        'mobile': candidate_user.mobile,
+        'date_of_birth': candidate_user.date_of_birth.strftime('%Y-%m-%d'),
+        'age': candidate_user.age,
+        'party': candidate_user.party,
+        'constituency': candidate_user.constituency,
+        'symbol': candidate_user.symbol,
+        'education': candidate_user.education,
+        'manifesto': candidate_user.manifesto,
+        'criminal_cases': candidate_user.criminal_cases,
+        'assets_value': str(candidate_user.assets_value) if candidate_user.assets_value else '0',
+        'street_address': candidate_user.street_address,
+        'city': candidate_user.city,
+        'state': candidate_user.state,
+        'pincode': candidate_user.pincode,
+        'photo': candidate_user.photo.url if candidate_user.photo else None,
+        'aadhar_document': candidate_user.aadhar_document.url if candidate_user.aadhar_document else None,
+        'education_certificate': candidate_user.education_certificate.url if candidate_user.education_certificate else None,
+        'affidavit': candidate_user.affidavit.url if candidate_user.affidavit else None,
+        'approval_status': candidate_user.approval_status,
+        'created_at': candidate_user.created_at.strftime('%Y-%m-%d %H:%M'),
+    }
+    
+    return JsonResponse({'success': True, 'candidate_user': data})
+
+@csrf_exempt
+@login_required
+def reconsider_candidate_user(request):
+    """Admin reconsiders a rejected candidate"""
+    if not (request.user.is_staff or request.user.role == 'admin'):
+        return JsonResponse({'success': False, 'message': 'Unauthorized'})
+    
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            candidate_user_id = data.get('candidate_user_id')
+            
+            candidate_user = get_object_or_404(CandidateUser, id=candidate_user_id)
+            
+            if candidate_user.approval_status == 'rejected':
+                candidate_user.approval_status = 'pending'
+                candidate_user.rejection_reason = None
+                candidate_user.save()
+                
+                return JsonResponse({
+                    'success': True, 
+                    'message': f'Candidate {candidate_user.name} moved to pending status.'
+                })
+            else:
+                return JsonResponse({'success': False, 'message': 'Candidate is not in rejected state.'})
+                
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+    
+    return JsonResponse({'success': False, 'message': 'Invalid request method'})

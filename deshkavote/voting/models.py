@@ -464,7 +464,7 @@ class CandidateUser(models.Model):
     )
     
     # Basic Information
-    candidate_id = models.CharField(max_length=20, unique=True)
+    candidate_id = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     mobile = models.CharField(max_length=10, validators=[RegexValidator(r'^\d{10}$')])

@@ -50,6 +50,10 @@ urlpatterns = [
     path('api/approve-candidate-user/', views.approve_candidate_user, name='approve_candidate_user'),
     path('api/reject-candidate-user/', views.reject_candidate_user, name='reject_candidate_user'),
 
+    # Candidate User APIs
+    path('api/candidate-user-details/<int:candidate_user_id>/', views.get_candidate_user_details, name='get_candidate_user_details'),
+    path('api/reconsider-candidate-user/', views.reconsider_candidate_user, name='reconsider_candidate_user'),
+
     # Real-time monitoring & stats APIs
     path('api/admin-stats/', views.admin_stats, name='admin_stats'),
     path('api/election-statistics/', views.get_election_statistics, name='election_statistics'),
